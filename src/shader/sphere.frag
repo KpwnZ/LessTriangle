@@ -10,8 +10,8 @@
  * @return Distance from the vertex to the sphere
  */
 vec4 sphere_sdf(vec3 v, vec3 p, float r, vec3 color) {
-	return vec4(
-		length(v - p) - r,
-		color
+    return vec4(
+        length(v - p) - r,
+        color
 	);
 }
