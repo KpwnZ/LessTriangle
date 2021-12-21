@@ -12,15 +12,15 @@ vec4 sphere_sdf(vec3 v, vec3 p, float r, vec3 color);
 // light
 vec3 ambient_light(vec3 color, float strength);
 vec3 diffusion_light(
-    vec3 p, vec3 light_pos, 
+    vec3 p, vec3 light_pos,
     vec3 light_color,
     vec3 diffuse_color, float k_d);
 
 vec4 min4(vec4 a, vec4 b) {
-    if(a.x < b.x) {
-        return a;
-    }
-    return b;
+	if (a.x < b.x) {
+		return a;
+	}
+	return b;
 }
 
 /**
@@ -35,10 +35,10 @@ vec4 scene(vec3 v) {
 	vec4 sdf2 = sphere_sdf(v, vec3(1, 2, 5), 1.0, vec3(0, 1, 0));
 	vec4 sdf3 = sphere_sdf(v, vec3(-1, 2, 5), 1.0, vec3(0, 0, 1));
 	vec4 res = min4(sdf1, sdf2);
-    res = min4(res, sdf3);
-    return vec4(
-        res.x,
-        res.yzw
+	res = min4(res, sdf3);
+	return vec4(
+	    res.x,
+	    res.yzw
     );
 }
 
@@ -52,8 +52,7 @@ vec3 normal(vec3 p) {
 	return normalize(vec3(
 	    scene(vec3(p.x + eps, p.y, p.z)).x - scene(vec3(p.x - eps, p.y, p.z)).x,
 	    scene(vec3(p.x, p.y + eps, p.z)).x - scene(vec3(p.x, p.y - eps, p.z)).x,
-	    scene(vec3(p.x, p.y, p.z + eps)).x - scene(vec3(p.x, p.y, p.z - eps)).x
-    ));
+	    scene(vec3(p.x, p.y, p.z + eps)).x - scene(vec3(p.x, p.y, p.z - eps)).x));
 }
 
 /**
@@ -66,24 +65,23 @@ vec3 normal(vec3 p) {
  * @return Distance from the ray to the scene
  */
 vec4 ray_march(vec3 start, vec3 dir) {
-    float depth = 0.0;
-    vec4 res;
-    for(int i = 0; i < MAX_STEP; ++i) {
-        vec3 p = start + dir * depth;
-        res = scene(p);
-        float dist = res.x;
-        depth += dist;
+	float depth = 0.0;
+	vec4 res;
+	for (int i = 0; i < MAX_STEP; ++i) {
+		vec3 p = start + dir * depth;
+		res = scene(p);
+		float dist = res.x;
+		depth += dist;
 		if (depth > MAX_DISTANCE || dist < SURFACE) {
-            // depth > MAX_DISTANCE means the ray is too far
-            // dist < SURFACE means the ray is very close to the surface, 
-            // which can be returned.
-            break;
-        }
+			// depth > MAX_DISTANCE means the ray is too far
+			// dist < SURFACE means the ray is very close to the surface,
+			// which can be returned.
+			break;
+		}
 	}
-    return vec4(
-        depth,
-        res.yzw
-    );
+	return vec4(
+	    depth,
+	    res.yzw);
 }
 
 // float get_dist() {
@@ -98,18 +96,17 @@ void main() {
 	vec3 rd = normalize(vec3(uv.x, uv.y, 1.));
 
 	vec4 res = ray_march(ro, rd);
-    float dist = res.x;
-    if(dist >= MAX_DISTANCE - 0.001) {
-        FragColor = vec4(1, 1, 1, 1);
-    }else {
-        vec3 p = ro + rd * dist;
-        vec3 n = normal(p);
+	float dist = res.x;
+	if (dist >= MAX_DISTANCE - 0.001) {
+		FragColor = vec4(1, 1, 1, 1);
+	} else {
+		vec3 p = ro + rd * dist;
+		vec3 n = normal(p);
 		vec3 lightPosition = vec3(0, 0, 3);
 
-        vec3 dif_color = diffusion_light(
-            p, lightPosition, 
-            vec3(1, 1, 1), res.yzw, 0.9
-        );
+		vec3 dif_color = diffusion_light(
+		    p, lightPosition,
+		    vec3(1, 1, 1), res.yzw, 0.9);
 
 		FragColor = vec4(dif_color, 1.0);
 	}
