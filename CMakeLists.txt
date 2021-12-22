@@ -27,3 +27,6 @@ if (APPLE)
 endif()
 
 target_link_libraries(lesstriangle glfw ${GLEW_LIBRARIES})
+if ("${CMAKE_SYSTEM}" MATCHES "Linux")
+    target_link_libraries(lesstriangle ${OPENGL_LIBRARIES})
+endif()
