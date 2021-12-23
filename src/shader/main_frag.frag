@@ -9,7 +9,7 @@ out vec4 FragColor; // gl style...
 uniform ivec2 resolution;
 
 // geometry
-vec4 sphere_sdf(vec3 v, vec3 p, float r, vec3 color);
+vec4 sphere(vec3 v, vec3 p, float r, vec3 color);
 vec4 cube(vec3 v, vec3 p, vec3 size, vec3 color);
 vec4 rounded_cube(vec3 v, vec3 p, vec3 size, vec3 color, float r);
 
