@@ -25,6 +25,10 @@ vec3 rotate_x(vec3 v, float angle);
 vec3 rotate_y(vec3 v, float angle);
 vec3 rotate_z(vec3 v, float angle);
 
+// color
+#define GROUND vec3(0.678, 0.506, 0.455)
+#define GRASS normalize_rgb(vec3(193, 222, 129))
+
 vec4 min4(vec4 a, vec4 b) {
     if (a.x < b.x) {
         return a;
@@ -36,6 +40,13 @@ vec3 normalize_rgb(vec3 rgb) {
     return rgb / 255.0;
 }
 
+vec4 grass_block(vec3 v, vec3 p, float size) {
+    vec4 block = union_sdf(
+        cube(v, vec3(p.x, p.y + size / 2, p.z), vec3(size, size, size), GROUND),
+        cube(v, vec3(p.x, p.y + size + 0.01 / 2, p.z), vec3(size, 0.01, size), GRASS));
+    return block;
+}
+
 /**
  * scene sdf, construct the scene here with geometric primitives
  *
@@ -44,10 +55,28 @@ vec3 normalize_rgb(vec3 rgb) {
  * @return Distance from the ray to the scene
  */
 vec4 scene(vec3 v) {
-    vec4 ground = cube(v, vec3(0, 0, 0), vec3(1, 0.1, 1), vec3(0.678, 0.506, 0.455));
-    vec4 grass1 = cube(v, vec3(0, 0.1, 0), vec3(1, 0.01, 1), normalize_rgb(vec3(193, 222, 129)));
+    vec4 ground = cube(v, vec3(0, 0, 0), vec3(3, 0.2, 3), vec3(0.678, 0.506, 0.455));
+    vec4 grass1 = cube(v, vec3(0, 0.105, 0), vec3(3, 0.01, 3), GRASS);
+
     vec4 res = union_sdf(ground, grass1);
-    // res = min4(res, sdf3);
+    res = union_sdf(res, grass_block(v, vec3(1.375, 0.1, 1.375), 0.25));
+    res = union_sdf(
+        res, 
+        grass_block(v, vec3(1.375, 0.35, 1.375), 0.25)
+    );
+    res = union_sdf(
+        res,
+        grass_block(v, vec3(1.125, 0.1, 1.125), 0.25)
+    );
+    res = union_sdf(
+        res,
+        grass_block(v, vec3(1.125, 0.1, 1.375), 0.25)
+    );
+    res = union_sdf(
+        res,
+        grass_block(v, vec3(1.375, 0.1, 1.125), 0.25)
+    );
+
     return vec4(
         res.x,
         res.yzw
@@ -130,15 +159,15 @@ void main() {
         vec3 n = normal(p);
         vec3 light_position = vec3(0, 3, -3);
 
-        vec3 dif_color = diffusion_light(
-            p, light_position,
-            vec3(1, 1, 1), res.yzw, 0.6);
+        // vec3 dif_color = diffusion_light(
+        //     p, light_position,
+        //     vec3(1, 1, 1), res.yzw, 0.7);
 
-        vec3 color = dif_color + ambient_light(res.yzw, vec3(1, 1, 1), 0.3);
+        // vec3 color = dif_color + ambient_light(res.yzw, vec3(1, 1, 1), 1);
         if(DEBUG_SDF) {
             FragColor = vec4(vec3(dist/5.0), 1.0);
         } else {
-            FragColor = vec4(color, 1.0);
+            FragColor = vec4(res.yzw, 1.0);
         }
     }
 }

@@ -11,9 +11,9 @@
  * @return Distance to the cube
  */
 vec4 cube(vec3 v, vec3 p, vec3 size, vec3 color) {
-    vec3 d = abs(v - p) - size;     // size = (l, w, h), 
-                                    // d.axis < 0 means the corresponding 
-                                    // point is inside the box
+    vec3 d = abs(v - p) - (size / 2);     // size = (l, w, h), 
+                                          // d.axis < 0 means the corresponding 
+                                          // point is inside the box
     d.x = max(d.x, 0);
     d.y = max(d.y, 0);
     d.z = max(d.z, 0);
@@ -27,9 +27,9 @@ vec4 cube(vec3 v, vec3 p, vec3 size, vec3 color) {
 }
 
 vec4 rounded_cube(vec3 v, vec3 p, vec3 size, vec3 color, float r) {
-    vec3 d = abs(v - p) - size;  // size = (l, w, h),
-                                 // d.axis < 0 means the corresponding
-                                 // point is inside the box
+    vec3 d = abs(v - p) - (size / 2);  // size = (l, w, h),
+                                       // d.axis < 0 means the corresponding
+                                       // point is inside the box
     d.x = max(d.x, 0);
     d.y = max(d.y, 0);
     d.z = max(d.z, 0);
