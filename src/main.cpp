@@ -4,6 +4,9 @@
 #include <cmath>
 #include <filesystem>
 #include <fstream>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 #include <iostream>
 #include <iterator>
 #include <vector>
@@ -29,8 +32,11 @@ static std::string read_shader(const std::filesystem::path::value_type *path) {
 
 int main(int argc, char **argv, char **envp) {
     int success;
-    const int width = 512;
-    const int height = 768/2;
+    const int width = 1024;
+    const int height = 768;
+    int framebufferWidth = 0;
+    int framebufferHeight = 0;
+    int resolution[] = {width, height};
     if (!glfwInit()) {
         fprintf(stderr, "failed to init\n");
     }
@@ -40,15 +46,17 @@ int main(int argc, char **argv, char **envp) {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
 #ifdef __APPLE__
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
 
     GLFWwindow *window;
     window = glfwCreateWindow(width, height, "LessTriangle", NULL, NULL);
 
+    glfwGetFramebufferSize(window, &resolution[0], &resolution[1]);
+    
     if (window == NULL) {
         fprintf(stderr, "failed to create window\n");
         glfwTerminate();
@@ -62,7 +70,7 @@ int main(int argc, char **argv, char **envp) {
         fprintf(stderr, "failed to init glew.\n");
         return -1;
     }
-
+    
     glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
 
     const float vertices[] = {
@@ -174,8 +182,7 @@ int main(int argc, char **argv, char **envp) {
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
     glEnableVertexAttribArray(0);
     // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    glUniform2f(glGetUniformLocation(shader_program, "resolution"), (GLfloat)width, (GLfloat)height);
-
+    glUniform2iv(glGetUniformLocation(shader_program, "resolution"), 1, resolution);
     do {
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
