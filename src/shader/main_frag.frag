@@ -40,12 +40,16 @@ vec3 normalize_rgb(vec3 rgb) {
     return rgb / 255.0;
 }
 
-vec4 grass_block(vec3 v, vec3 p, float size) {
+vec4 grass_block(vec3 v, vec3 p, float extent, float height) {
     vec4 block = union_sdf(
-        cube(v, vec3(p.x, p.y + size / 2, p.z), vec3(size, size, size), GROUND),
-        cube(v, vec3(p.x, p.y + size + 0.01 / 2, p.z), vec3(size, 0.01, size), GRASS));
+        cube(v, vec3(p.x, p.y + height / 2, p.z), vec3(extent, height, extent), GROUND),
+        cube(v, vec3(p.x, p.y + height + 0.01 / 2, p.z), vec3(extent, 0.01, extent), GRASS));
     return block;
 }
+
+// vec4 tree_block(vec3 v, vec3 p, float scale) {
+
+// }
 
 /**
  * scene sdf, construct the scene here with geometric primitives
@@ -59,23 +63,11 @@ vec4 scene(vec3 v) {
     vec4 grass1 = cube(v, vec3(0, 0.105, 0), vec3(3, 0.01, 3), GRASS);
 
     vec4 res = union_sdf(ground, grass1);
-    res = union_sdf(res, grass_block(v, vec3(1.375, 0.1, 1.375), 0.25));
-    res = union_sdf(
-        res, 
-        grass_block(v, vec3(1.375, 0.35, 1.375), 0.25)
-    );
-    res = union_sdf(
-        res,
-        grass_block(v, vec3(1.125, 0.1, 1.125), 0.25)
-    );
-    res = union_sdf(
-        res,
-        grass_block(v, vec3(1.125, 0.1, 1.375), 0.25)
-    );
-    res = union_sdf(
-        res,
-        grass_block(v, vec3(1.375, 0.1, 1.125), 0.25)
-    );
+    for(int i = 0; i <= 3; ++i) {
+        for(int j = 0; j <= i; ++j) {
+            res = min4(res, grass_block(v, vec3(((j * 2) + 1) * 0.125 - 1.5, 0.1, (((i - j) * 2) + 1) * 0.125 - 1.5), 0.25, (3 - i)*0.125));
+        }
+    }
 
     return vec4(
         res.x,
@@ -159,6 +151,7 @@ void main() {
         vec3 n = normal(p);
         vec3 light_position = vec3(0, 3, -3);
 
+        // TODO: add lighting
         // vec3 dif_color = diffusion_light(
         //     p, light_position,
         //     vec3(1, 1, 1), res.yzw, 0.7);
