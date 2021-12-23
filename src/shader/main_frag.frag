@@ -6,11 +6,12 @@
 #define DEBUG_SDF    false
 
 out vec4 FragColor; // gl style...
-uniform vec2 resolution;
+uniform ivec2 resolution;
 
 // geometry
 vec4 sphere_sdf(vec3 v, vec3 p, float r, vec3 color);
 vec4 cube(vec3 v, vec3 p, vec3 size, vec3 color);
+vec4 rounded_cube(vec3 v, vec3 p, vec3 size, vec3 color, float r);
 
 // light
 vec3 ambient_light(vec3, vec3, float);
@@ -31,7 +32,7 @@ vec4 min4(vec4 a, vec4 b) {
  * @return Distance from the ray to the scene
  */
 vec4 scene(vec3 v) {
-    vec4 sdf1 = cube(v, vec3(0, 0, 5), vec3(1, 1, 1), vec3(1, 0, 0));
+    vec4 sdf1 = rounded_cube(v, vec3(0, 0, 5), vec3(1, 1, 1), vec3(1, 0, 0), 0.5);
     vec4 sdf2 = sphere_sdf(v, vec3(1, 2, 5), 1.0, vec3(0, 1, 0));
     vec4 sdf3 = sphere_sdf(v, vec3(-1, 2, 5), 1.0, vec3(0, 0, 1));
     vec4 res = min4(sdf1, sdf2);
@@ -86,8 +87,10 @@ vec4 ray_march(vec3 start, vec3 dir) {
 
 void main() {
     // FragColor = vec4(0.5, 0.6, 0.7, 1.0);
-    vec2 uv = (gl_FragCoord.xy - resolution.xy) / resolution.x;
-    vec3 ro = vec3(0, 3, 0);
+    vec2 __resolution = resolution;
+    vec2 ratio = vec2(__resolution.x / __resolution.y, 1.0);
+    vec2 uv = ratio * (gl_FragCoord.xy / __resolution.xy - 0.5);
+    vec3 ro = vec3(0, 0, 0);
     vec3 rd = normalize(vec3(uv.x, uv.y, 1.));
 
     vec4 res = ray_march(ro, rd);
@@ -111,3 +114,4 @@ void main() {
         }
     }
 }
+
