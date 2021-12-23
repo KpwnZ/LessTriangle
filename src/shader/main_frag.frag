@@ -17,11 +17,23 @@ vec4 rounded_cube(vec3 v, vec3 p, vec3 size, vec3 color, float r);
 vec3 ambient_light(vec3, vec3, float);
 vec3 diffusion_light(vec3, vec3, vec3, vec3, float);
 
+// SDF
+vec4 union_sdf(vec4 sdf1, vec4 sdf2);
+
+// transform
+vec3 rotate_x(vec3 v, float angle);
+vec3 rotate_y(vec3 v, float angle);
+vec3 rotate_z(vec3 v, float angle);
+
 vec4 min4(vec4 a, vec4 b) {
     if (a.x < b.x) {
         return a;
     }
     return b;
+}
+
+vec3 normalize_rgb(vec3 rgb) {
+    return rgb / 255.0;
 }
 
 /**
@@ -32,11 +44,10 @@ vec4 min4(vec4 a, vec4 b) {
  * @return Distance from the ray to the scene
  */
 vec4 scene(vec3 v) {
-    vec4 sdf1 = rounded_cube(v, vec3(0, 0, 5), vec3(1, 1, 1), vec3(1, 0, 0), 0.5);
-    vec4 sdf2 = sphere_sdf(v, vec3(1, 2, 5), 1.0, vec3(0, 1, 0));
-    vec4 sdf3 = sphere_sdf(v, vec3(-1, 2, 5), 1.0, vec3(0, 0, 1));
-    vec4 res = min4(sdf1, sdf2);
-    res = min4(res, sdf3);
+    vec4 ground = cube(v, vec3(0, 0, 0), vec3(1, 0.1, 1), vec3(0.678, 0.506, 0.455));
+    vec4 grass1 = cube(v, vec3(0, 0.1, 0), vec3(1, 0.01, 1), normalize_rgb(vec3(193, 222, 129)));
+    vec4 res = union_sdf(ground, grass1);
+    // res = min4(res, sdf3);
     return vec4(
         res.x,
         res.yzw
@@ -85,13 +96,30 @@ vec4 ray_march(vec3 start, vec3 dir) {
         res.yzw);
 }
 
+/**
+ * Calculate the transform matrix for ray direction, similar to lookat()
+ * 
+ * @param[in] Postion    Camera position
+ * @param[in] Up         Up direction
+ * @param[in] Target     Target position
+ *
+ * @return Transform matrix
+ */
+mat3 camera_mat(vec3 p, vec3 up, vec3 t) {
+    vec3 direction = normalize(p - t);
+    vec3 r = normalize(cross(up, direction));
+    vec3 y = normalize(cross(direction, r));
+    return mat3(-r, y, -direction);
+}
+
 void main() {
     // FragColor = vec4(0.5, 0.6, 0.7, 1.0);
     vec2 __resolution = resolution;
     vec2 ratio = vec2(__resolution.x / __resolution.y, 1.0);
     vec2 uv = ratio * (gl_FragCoord.xy / __resolution.xy - 0.5);
-    vec3 ro = vec3(0, 0, 0);
-    vec3 rd = normalize(vec3(uv.x, uv.y, 1.));
+    vec3 ro = vec3(3, 3, -3);
+    mat3 cm = camera_mat(ro, vec3(0, 1, 0), vec3(0, 0, 0));
+    vec3 rd = cm * normalize(vec3(uv.x, uv.y, 1.));
 
     vec4 res = ray_march(ro, rd);
     float dist = res.x;
@@ -100,7 +128,7 @@ void main() {
     } else {
         vec3 p = ro + rd * dist;
         vec3 n = normal(p);
-        vec3 light_position = vec3(0, 0, 3);
+        vec3 light_position = vec3(0, 3, -3);
 
         vec3 dif_color = diffusion_light(
             p, light_position,

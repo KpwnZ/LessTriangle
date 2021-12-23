@@ -148,7 +148,9 @@ int main(int argc, char **argv, char **envp) {
         "../src/shader/main_frag.frag",
         "../src/shader/sphere.frag",
         "../src/shader/cube.frag",
-        "../src/shader/lighting_model.frag"
+        "../src/shader/lighting_model.frag",
+        "../src/shader/sdf.frag",
+        "../src/shader/transform.frag",
     };
 
     for(auto filename : shaders) {
