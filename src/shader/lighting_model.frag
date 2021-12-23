@@ -8,8 +8,8 @@ vec3 normal(vec3 p);
  *
  * @return return the strength of the ambient light.
  */
-vec3 ambient_light(vec3 color, float strength) {
-    return color * strength;
+vec3 ambient_light(vec3 color, vec3 light_color, float k) {
+    return color * light_color * k;
 }
 
 vec3 diffusion_light(
