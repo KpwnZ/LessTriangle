@@ -110,9 +110,12 @@ vec2 scene(vec3 v) {
     }
     res = union_sdf(
         res,
-        sphere(v, vec3(0, 0, 0), 1, 0));
-    res = union_sdf(res,
-                    cube(v, light_sources[0].light_pos, vec3(0.1), 2));
+        sphere(v, vec3(0, 0, 0), 1, 0)
+    );
+    // res = union_sdf(
+    //     res,
+    //     cube(v, light_sources[0].light_pos, vec3(0.1), 2)
+    // );
 
     return vec2(
         res.x,
@@ -205,11 +208,13 @@ void main() {
         for (int i = 0; i < 1; ++i) {
             LightSource ls = light_sources[i];
             // find shadow
+            vec3 n = normal(p);
             vec3 light_dir = normalize(ls.light_pos - p);
-            vec2 shadow_res = ray_march(p, light_dir);
+            vec2 shadow_res = ray_march(p + n * 0.001, light_dir);
+            // without the n * eps, the ray will be blocked by the surface
             float shadow_dist = shadow_res.x;
-            if (shadow_dist < length(ls.light_pos - p)) {
-                dif_color *= 0.2;
+            if (shadow_dist < length(ls.light_pos - p)-1) {
+                dif_color *= 0.3;
             }
         }
         // dif_color += ambient_light(hit_material.ambient_color, vec3(1, 1, 1), daylight_ambient);
