@@ -1,6 +1,6 @@
 #version 330 core
 
-vec4 union_sdf(vec4 sdf1, vec4 sdf2) {
+vec2 union_sdf(vec2 sdf1, vec2 sdf2) {
     if(sdf1.x <= sdf2.x) {
         return sdf1;
     }

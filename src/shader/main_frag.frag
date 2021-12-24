@@ -1,4 +1,5 @@
 #version 330 core
+#extension GL_ARB_separate_shader_objects : enable
 
 #define MAX_STEP     100
 #define MAX_DISTANCE 100
@@ -9,16 +10,16 @@ out vec4 FragColor; // gl style...
 uniform ivec2 resolution;
 
 // geometry
-vec4 sphere(vec3 v, vec3 p, float r, vec3 color);
-vec4 cube(vec3 v, vec3 p, vec3 size, vec3 color);
-vec4 rounded_cube(vec3 v, vec3 p, vec3 size, vec3 color, float r);
+vec2 sphere(vec3 v, vec3 p, float r, int mat_id);
+vec2 cube(vec3 v, vec3 p, vec3 size, int mat_id);
+vec2 rounded_cube(vec3 v, vec3 p, vec3 size, float r, int mat_id);
 
 // light
 vec3 ambient_light(vec3, vec3, float);
 vec3 diffusion_light(vec3, vec3, vec3, vec3, float);
 
 // SDF
-vec4 union_sdf(vec4 sdf1, vec4 sdf2);
+vec2 union_sdf(vec2 sdf1, vec2 sdf2);
 
 // transform
 vec3 rotate_x(vec3 v, float angle);
@@ -29,21 +30,47 @@ vec3 rotate_z(vec3 v, float angle);
 #define GROUND vec3(0.678, 0.506, 0.455)
 #define GRASS normalize_rgb(vec3(193, 222, 129))
 
-vec4 min4(vec4 a, vec4 b) {
-    if (a.x < b.x) {
-        return a;
-    }
-    return b;
-}
-
 vec3 normalize_rgb(vec3 rgb) {
     return rgb / 255.0;
 }
 
-vec4 grass_block(vec3 v, vec3 p, float extent, float height) {
-    vec4 block = union_sdf(
-        cube(v, vec3(p.x, p.y + height / 2, p.z), vec3(extent, height, extent), GROUND),
-        cube(v, vec3(p.x, p.y + height + 0.01 / 2, p.z), vec3(extent, 0.01, extent), GRASS));
+// material
+struct Material {
+    vec3 ambient_color;
+    vec3 diffuse_color;
+    float k_d;
+    bool is_lighting;
+    vec3 light_color;
+    vec3 light_pos;
+};
+
+// add new material here, 
+// pass the index to sdf method as material id
+Material materials[2] = Material[2](
+    // ground id 0
+    Material(
+        GROUND,
+        GROUND,
+        1.0,
+        false,
+        vec3(0.0),
+        vec3(0.0)
+    ),
+    // grass id 1
+    Material(
+        GRASS,
+        GRASS,
+        1.0,
+        true,
+        vec3(0.0),
+        vec3(0.0)
+    )
+);
+
+vec2 grass_block(vec3 v, vec3 p, float extent, float height) {
+    vec2 block = union_sdf(
+        cube(v, vec3(p.x, p.y + height / 2, p.z), vec3(extent, height, extent), 0),
+        cube(v, vec3(p.x, p.y + height + 0.01 / 2, p.z), vec3(extent, 0.01, extent), 1));
     return block;
 }
 
@@ -58,20 +85,18 @@ vec4 grass_block(vec3 v, vec3 p, float extent, float height) {
  *
  * @return Distance from the ray to the scene
  */
-vec4 scene(vec3 v) {
-    vec4 ground = cube(v, vec3(0, 0, 0), vec3(3, 0.2, 3), vec3(0.678, 0.506, 0.455));
-    vec4 grass1 = cube(v, vec3(0, 0.105, 0), vec3(3, 0.01, 3), GRASS);
-
-    vec4 res = union_sdf(ground, grass1);
+vec2 scene(vec3 v) {
+    vec2 ground = grass_block(v, vec3(0, -0.1, 0), 3, 0.2);
+    vec2 res = ground;
     for(int i = 0; i <= 3; ++i) {
         for(int j = 0; j <= i; ++j) {
-            res = min4(res, grass_block(v, vec3(((j * 2) + 1) * 0.125 - 1.5, 0.1, (((i - j) * 2) + 1) * 0.125 - 1.5), 0.25, (3 - i)*0.125));
+            res = union_sdf(res, grass_block(v, vec3(((j * 2) + 1) * 0.125 - 1.5, 0.1, (((i - j) * 2) + 1) * 0.125 - 1.5), 0.25, (3 - i)*0.125));
         }
     }
 
-    return vec4(
+    return vec2(
         res.x,
-        res.yzw
+        res.y
     );
 }
 
@@ -97,9 +122,9 @@ vec3 normal(vec3 p) {
  *
  * @return Distance from the ray to the scene
  */
-vec4 ray_march(vec3 start, vec3 dir) {
+vec2 ray_march(vec3 start, vec3 dir) {
     float depth = 0.0;
-    vec4 res;
+    vec2 res;
     for (int i = 0; i < MAX_STEP; ++i) {
         vec3 p = start + dir * depth;
         res = scene(p);
@@ -112,9 +137,9 @@ vec4 ray_march(vec3 start, vec3 dir) {
             break;
         }
     }
-    return vec4(
+    return vec2(
         depth,
-        res.yzw);
+        res.y);
 }
 
 /**
@@ -142,8 +167,9 @@ void main() {
     mat3 cm = camera_mat(ro, vec3(0, 1, 0), vec3(0, 0, 0));
     vec3 rd = cm * normalize(vec3(uv.x, uv.y, 1.));
 
-    vec4 res = ray_march(ro, rd);
+    vec2 res = ray_march(ro, rd);
     float dist = res.x;
+    Material hit_material = materials[int(res.y)];
     if (dist >= MAX_DISTANCE - 0.001) {
         FragColor = vec4(1, 1, 1, 1);
     } else {
@@ -160,7 +186,7 @@ void main() {
         if(DEBUG_SDF) {
             FragColor = vec4(vec3(dist/5.0), 1.0);
         } else {
-            FragColor = vec4(res.yzw, 1.0);
+            FragColor = vec4(hit_material.diffuse_color, 1.0);
         }
     }
 }
