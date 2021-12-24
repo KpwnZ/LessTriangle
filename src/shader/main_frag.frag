@@ -1,12 +1,12 @@
 #version 330 core
 #extension GL_ARB_separate_shader_objects : enable
 
-#define MAX_STEP     100
+#define MAX_STEP 100
 #define MAX_DISTANCE 100
-#define SURFACE      0.001
-#define DEBUG_SDF    false
+#define SURFACE 0.001
+#define DEBUG_SDF false
 
-out vec4 FragColor; // gl style...
+out vec4 FragColor;  // gl style...
 uniform ivec2 resolution;
 
 // geometry
@@ -15,6 +15,8 @@ vec2 cube(vec3 v, vec3 p, vec3 size, int mat_id);
 vec2 rounded_cube(vec3 v, vec3 p, vec3 size, float r, int mat_id);
 
 // light
+const float daylight_ambient = 0.5;
+const float nightlight_ambient = 0.1;
 vec3 ambient_light(vec3, vec3, float);
 vec3 diffusion_light(vec3, vec3, vec3, vec3, float);
 
@@ -39,33 +41,46 @@ struct Material {
     vec3 ambient_color;
     vec3 diffuse_color;
     float k_d;
-    bool is_lighting;
-    vec3 light_color;
-    vec3 light_pos;
+    // bool is_lighting;
+    // vec3 light_color;
+    // vec3 light_pos;
 };
 
-// add new material here, 
+struct LightSource {
+    vec3 light_pos;
+    vec3 light_color;
+};
+
+// add new material here,
 // pass the index to sdf method as material id
-Material materials[2] = Material[2](
+Material materials[3] = Material[3](
     // ground id 0
     Material(
         GROUND,
         GROUND,
-        1.0,
-        false,
-        vec3(0.0),
-        vec3(0.0)
-    ),
+        0.8
+        // false,
+        // vec3(0.0),
+        // vec3(0.0)
+        ),
     // grass id 1
     Material(
         GRASS,
         GRASS,
-        1.0,
-        true,
-        vec3(0.0),
-        vec3(0.0)
-    )
-);
+        0.9
+        // true,
+        // vec3(0.0),
+        // vec3(0.0)
+        ),
+    Material(
+        normalize_rgb(vec3(201, 203, 45)),
+        normalize_rgb(vec3(201, 203, 45)),
+        0.0));
+
+LightSource light_sources[1] = LightSource[1](
+    LightSource(
+        vec3(-1.5, 2.0, -1.5),
+        vec3(1.0, 1.0, 1.0)));
 
 vec2 grass_block(vec3 v, vec3 p, float extent, float height) {
     vec2 block = union_sdf(
@@ -88,16 +103,20 @@ vec2 grass_block(vec3 v, vec3 p, float extent, float height) {
 vec2 scene(vec3 v) {
     vec2 ground = grass_block(v, vec3(0, -0.1, 0), 3, 0.2);
     vec2 res = ground;
-    for(int i = 0; i <= 3; ++i) {
-        for(int j = 0; j <= i; ++j) {
-            res = union_sdf(res, grass_block(v, vec3(((j * 2) + 1) * 0.125 - 1.5, 0.1, (((i - j) * 2) + 1) * 0.125 - 1.5), 0.25, (3 - i)*0.125));
+    for (int i = 0; i <= 3; ++i) {
+        for (int j = 0; j <= i; ++j) {
+            res = union_sdf(res, grass_block(v, vec3(((j * 2) + 1) * 0.125 - 1.5, 0.1, (((i - j) * 2) + 1) * 0.125 - 1.5), 0.25, (3 - i) * 0.125));
         }
     }
+    res = union_sdf(
+        res,
+        sphere(v, vec3(0, 0, 0), 1, 0));
+    res = union_sdf(res,
+                    cube(v, light_sources[0].light_pos, vec3(0.1), 2));
 
     return vec2(
         res.x,
-        res.y
-    );
+        res.y);
 }
 
 /**
@@ -137,9 +156,7 @@ vec2 ray_march(vec3 start, vec3 dir) {
             break;
         }
     }
-    return vec2(
-        depth,
-        res.y);
+    return vec2(depth, res.y);
 }
 
 /**
@@ -174,20 +191,33 @@ void main() {
         FragColor = vec4(1, 1, 1, 1);
     } else {
         vec3 p = ro + rd * dist;
-        vec3 n = normal(p);
-        vec3 light_position = vec3(0, 3, -3);
+        // vec3 light_position = vec3(0, 3, -3);
 
         // TODO: add lighting
-        // vec3 dif_color = diffusion_light(
-        //     p, light_position,
-        //     vec3(1, 1, 1), res.yzw, 0.7);
+        vec3 dif_color = vec3(0);
+        for (int i = 0; i < 1; ++i) {
+            LightSource ls = light_sources[i];
+            dif_color += diffusion_light(
+                p, ls.light_pos,
+                ls.light_color, hit_material.diffuse_color,
+                hit_material.k_d);
+        }
+        for (int i = 0; i < 1; ++i) {
+            LightSource ls = light_sources[i];
+            // find shadow
+            vec3 light_dir = normalize(ls.light_pos - p);
+            vec2 shadow_res = ray_march(p, light_dir);
+            float shadow_dist = shadow_res.x;
+            if (shadow_dist < length(ls.light_pos - p)) {
+                dif_color *= 0.2;
+            }
+        }
+        // dif_color += ambient_light(hit_material.ambient_color, vec3(1, 1, 1), daylight_ambient);
 
-        // vec3 color = dif_color + ambient_light(res.yzw, vec3(1, 1, 1), 1);
-        if(DEBUG_SDF) {
-            FragColor = vec4(vec3(dist/5.0), 1.0);
+        if (DEBUG_SDF) {
+            FragColor = vec4(vec3(dist / 5.0), 1.0);
         } else {
-            FragColor = vec4(hit_material.diffuse_color, 1.0);
+            FragColor = vec4(dif_color, 1.0);
         }
     }
 }
-
