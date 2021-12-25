@@ -18,7 +18,7 @@ vec2 rounded_cube(vec3 v, vec3 p, vec3 size, float r, int mat_id);
 const float daylight_ambient = 0.5;
 const float nightlight_ambient = 0.1;
 vec3 ambient_light(vec3, vec3, float);
-vec3 diffusion_light(vec3, vec3, vec3, vec3, float);
+vec3 diffusion_light(vec3, vec3, vec3, vec3, float, float);
 
 // SDF
 vec2 union_sdf(vec2 sdf1, vec2 sdf2);
@@ -55,6 +55,7 @@ struct Material {
 struct LightSource {
     vec3 light_pos;
     vec3 light_color;
+    float intensity;
 };
 
 // add new material here,
@@ -80,8 +81,9 @@ Material materials[3] = Material[3](
 
 LightSource light_sources[1] = LightSource[1](
     LightSource(
-        vec3(-1.5, 1, -1.5),
-        vec3(1.0, 1.0, 1.0)));
+        vec3(-1.5, 1, 0),
+        vec3(1.0, 1.0, 1.0),
+        1.3));
 
 vec2 grass_block(vec3 v, vec3 p, float extent, float height) {
     vec2 block = union_sdf(
@@ -250,10 +252,12 @@ void main() {
         vec3 dif_color = vec3(0);
         for (int i = 0; i < 1; ++i) {
             LightSource ls = light_sources[i];
+            float light_dist = length(ls.light_pos - p);
+            float attenuation = 1.0 / (1.0 + 0.7 * light_dist + 1.80 * light_dist * light_dist);
             dif_color += diffusion_light(
                 p, ls.light_pos,
                 ls.light_color, hit_material.diffuse_color,
-                hit_material.k_d);
+                hit_material.k_d, ls.intensity) * attenuation;
         }
         for (int i = 0; i < 1; ++i) {
             LightSource ls = light_sources[i];
