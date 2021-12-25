@@ -15,7 +15,7 @@ vec2 cube(vec3 v, vec3 p, vec3 size, int mat_id);
 vec2 rounded_cube(vec3 v, vec3 p, vec3 size, float r, int mat_id);
 
 // light
-const float daylight_ambient = 0.3;
+const float daylight_ambient = 0.5;
 const float nightlight_ambient = 0.1;
 vec3 ambient_light(vec3, vec3, float);
 vec3 diffusion_light(vec3, vec3, vec3, vec3, float);
@@ -27,13 +27,19 @@ vec2 union_sdf(vec2 sdf1, vec2 sdf2);
 vec3 rotate_x(vec3 v, float angle);
 vec3 rotate_y(vec3 v, float angle);
 vec3 rotate_z(vec3 v, float angle);
+vec3 rotate(vec3 v, vec3 n, float angle);
 
 // color
+#define SKY normalize_rgb(vec3(199, 235, 237))
 #define GROUND normalize_rgb(vec3(182, 128, 115))
 #define GRASS normalize_rgb(vec3(193, 222, 129))
 
 vec3 normalize_rgb(vec3 rgb) {
     return rgb / 255.0;
+}
+
+float rand(vec2 co) {
+    return fract(sin(dot(co.xy, vec2(12.9898, 78.233))) * 43758.5453);
 }
 
 // material
@@ -59,23 +65,18 @@ Material materials[3] = Material[3](
         GROUND,
         GROUND,
         0.8
-        // false,
-        // vec3(0.0),
-        // vec3(0.0)
-        ),
+    ),
     // grass id 1
     Material(
         GRASS,
         GRASS,
         0.9
-        // true,
-        // vec3(0.0),
-        // vec3(0.0)
-        ),
+    ),
     Material(
         normalize_rgb(vec3(201, 203, 45)),
         normalize_rgb(vec3(201, 203, 45)),
-        0.0));
+        0.0)
+);
 
 LightSource light_sources[1] = LightSource[1](
     LightSource(
@@ -89,9 +90,52 @@ vec2 grass_block(vec3 v, vec3 p, float extent, float height) {
     return block;
 }
 
-// vec4 tree_block(vec3 v, vec3 p, float scale) {
+vec2 tree_block(vec3 v, vec3 p, float height) {
+    // trunk
+    vec2 main_trunk = cube(v, vec3(p.x, p.y + height / 2, p.z), vec3(0.08, height, 0.08), 0);
+    main_trunk = union_sdf(
+        main_trunk,
+        cube(v, vec3(p.x + height / 6, p.y + height / 3 * 2, p.z), vec3(height / 3, 0.08, 0.08), 0)
+    );
+    main_trunk = union_sdf(
+        main_trunk,
+        cube(v, vec3(p.x + height / 3 - 0.04, p.y + height / 3 * 2 + 0.08, p.z), vec3(0.08, 0.16, 0.08), 0)
+    );
+    main_trunk = union_sdf(
+        main_trunk,
+        cube(v, vec3(p.x - height / 6, p.y + height / 3 * 2 + 0.08, p.z), vec3(0.08, 0.16, 0.08), 0)
+    );
+    // main_trunk = union_sdf(
+    //     main_trunk,
+    //     cube(v, vec3(p.x + height / 3 - 0.04, p.y + height / 3 * 2 + 0.08, p.z), vec3(0.08, 0.16, 0.08), 0)
+    // );
 
-// }
+    // leaves
+    float n1 = 0.25;
+    vec2 top_leaves = cube(v, vec3(p.x, p.y + height + n1 / 2, p.z), vec3(n1, n1, n1), 1);
+    n1 -= 0.06;
+    top_leaves = union_sdf(
+        top_leaves,
+        cube(v, vec3(p.x + height / 3 + 0.03, p.y + height / 3 * 2 + 0.16, p.z), vec3(n1, n1, n1), 1)
+    );
+    top_leaves = union_sdf(
+        top_leaves,
+        cube(v, vec3(p.x - height / 3 - 0.03, p.y + height / 3 * 2 + 0.16, p.z), vec3(n1+0.03, n1, n1+0.03), 1)
+    );
+    n1 += 0.05;
+    top_leaves = union_sdf(
+        top_leaves,
+        cube(v, vec3(p.x, p.y + height / 3 * 2 + 0.12, p.z - height / 3 - 0.08), vec3(n1+0.03, n1, n1+0.03), 1)
+    );
+    n1 += 0.03;
+    top_leaves = union_sdf(
+        top_leaves,
+        cube(v, vec3(p.x, p.y + height / 3 * 2 + 0.10, p.z + height / 3 + 0.06), vec3(n1, n1, n1), 1)
+    );
+
+    main_trunk = union_sdf(main_trunk, top_leaves);
+    return main_trunk;
+}
 
 /**
  * scene sdf, construct the scene here with geometric primitives
@@ -104,13 +148,19 @@ vec2 scene(vec3 v) {
     vec2 ground = grass_block(v, vec3(0, -0.1, 0), 3, 0.2);
     vec2 res = ground;
     for (int i = 0; i <= 3; ++i) {
-        for (int j = 0; j <= i; ++j) {
-            res = union_sdf(res, grass_block(v, vec3(((j * 2) + 1) * 0.125 - 1.5, 0.1, (((i - j) * 2) + 1) * 0.125 - 1.5), 0.25, (3 - i) * 0.125));
+        for (int j = 0; j <= 3 - i + 1; ++j) {
+            int h = (3 - i + 1 - j);
+            if(h == 4) h = 3;
+            res = union_sdf(
+                res,
+                grass_block(v, vec3(-1.5+(2 * i + 1) * 0.15, 0.1, 1.5-(2 * j + 1) * 0.15), 0.3, h * 0.125)
+            );
         }
     }
     res = union_sdf(
         res,
-        sphere(v, vec3(0, 0, 0), 1, 0)
+        //sphere(v, vec3(0, 0, 0), 1, 0)
+        tree_block(v, vec3(-1.5 + 0.15, 0.375+0.1, 1.5 - 0.15), 0.5)
     );
     res = union_sdf(
         res,
@@ -191,7 +241,7 @@ void main() {
     float dist = res.x;
     Material hit_material = materials[int(res.y)];
     if (dist >= MAX_DISTANCE - 0.001) {
-        FragColor = vec4(1, 1, 1, 1);
+        FragColor = vec4(SKY, 1);
     } else {
         vec3 p = ro + rd * dist;
         // vec3 light_position = vec3(0, 3, -3);
