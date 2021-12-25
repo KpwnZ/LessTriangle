@@ -58,3 +58,33 @@ vec2 rounded_cube(vec3 v, vec3 p, vec3 size, float r, int mat_id) {
     // if the point is inside the box
     return vec2(di, mat_id);
 }
+
+vec2 torus(vec3 v, vec3 o, vec2 t, int mat_id) {
+    // t are the radii
+    vec3 p = v - o;
+    vec2 q = vec2(length(p.xz) - t.x, p.y);
+    return vec2(length(q) - t.y, mat_id);
+}
+
+vec2 cone(vec3 v, vec3 o, vec2 c, float h, int mat_id) {
+    // c is the sin/cos of the angle, h is height
+    // Alternatively pass q instead of (c,h),
+    // which is the point at the base in 2D
+    vec3 p = v - o;
+    vec2 q = h * vec2(c.x / c.y, -1.0);
+    
+    vec2 w = vec2(length(p.xz), p.y);
+    vec2 a = w - q * clamp(dot(w, q) / dot(q, q), 0.0, 1.0);
+    vec2 b = w - q * vec2(clamp(w.x / q.x, 0.0, 1.0), 1.0);
+    float k = sign(q.y);
+    float d = min(dot(a, a), dot(b, b));
+    float s = max(k * (w.x * q.y - w.y * q.x), k * (w.y - q.y));
+    return vec2(sqrt(d) * sign(s), mat_id);
+}
+
+
+vec2 capped_cylinder(vec3 v, vec3 o, float r, float h, int mat_id) {
+    vec3 p = v - o;
+    vec2 d = abs(vec2(length(p.xz), p.y)) - vec2(h, r);
+    return vec2(min(max(d.x, d.y), 0.0) + length(max(d, 0.0)), mat_id);
+}

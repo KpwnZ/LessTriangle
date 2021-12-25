@@ -13,6 +13,9 @@ uniform ivec2 resolution;
 vec2 sphere(vec3 v, vec3 p, float r, int mat_id);
 vec2 cube(vec3 v, vec3 p, vec3 size, int mat_id);
 vec2 rounded_cube(vec3 v, vec3 p, vec3 size, float r, int mat_id);
+vec2 torus(vec3, vec3, vec2, int);
+vec2 cone(vec3, vec3, vec2, float, int);
+vec2 capped_cylinder(vec3, vec3, float, float, int);
 
 // light
 const float daylight_ambient = 0.8;
@@ -190,7 +193,9 @@ vec2 scene(vec3 v) {
     
     res = union_sdf(
         res,
-        sphere(v, vec3(0, 0, 0), 0.5, 1)
+        torus(v, vec3(0, 1.0, 0), vec2(0.9, 0.3), 2)
+        // cone(v, vec3(0, 1.0, 0), vec2(3.0 / 5, 4.0 / 5), 0.5, 2)
+        // capped_cylinder(v, vec3(0, 1.0, 0), 0.2, 0.2, 2)
     );
     
 
@@ -292,6 +297,7 @@ void main() {
 
         // TODO: add lighting
         vec3 dif_color = vec3(0);
+        /*
         for (int i = 0; i < 2; ++i) {
             LightSource ls = light_sources[i];
             float light_dist = length(ls.light_pos - p);
@@ -320,6 +326,7 @@ void main() {
             
             dif_color *= soft_shadow(p + n * 0.001, light_dir, 0.1, length(ls.light_pos - p) - 0.4);
         }
+        */
         dif_color += ambient_light(hit_material.ambient_color, vec3(1, 1, 1), daylight_ambient);
 
         if (DEBUG_SDF) {
