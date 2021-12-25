@@ -24,6 +24,9 @@ vec3 diffusion_light(vec3, vec3, vec3, vec3, float, float);
 vec2 union_sdf(vec2 sdf1, vec2 sdf2);
 vec2 intersection_sdf(vec2 sdf1, vec2 sdf2);
 vec2 substraction_sdf(vec2 sdf1, vec2 sdf2);
+vec2 smooth_union_sdf(vec2 sdf1, vec2 sdf2, float k);
+vec2 smooth_intersection_sdf(vec2 sdf1, vec2 sdf2, float k);
+vec2 smooth_substraction_sdf(vec2 sdf1, vec2 sdf2, float k);
 
 // transform
 vec3 rotate_x(vec3 v, float angle);
@@ -184,9 +187,10 @@ vec2 scene(vec3 v) {
         cube(v, light_sources[0].light_pos, vec3(0.1), 2)
     );
 
-    vec2 pan = substraction_sdf(
-        sphere(v, vec3(0, 0, -2), 0.5, 2), 
-        sphere(v, vec3(0, 0, -1.5), 0.5, 2)
+    vec2 pan = smooth_intersection_sdf(
+        sphere(v, vec3(0, 0, -2.5), 0.5, 2), 
+        sphere(v, vec3(0, 0, -2), 0.5, 2),
+        0.1
     );
     
     res = union_sdf(
