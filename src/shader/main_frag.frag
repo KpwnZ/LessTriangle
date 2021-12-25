@@ -15,7 +15,7 @@ vec2 cube(vec3 v, vec3 p, vec3 size, int mat_id);
 vec2 rounded_cube(vec3 v, vec3 p, vec3 size, float r, int mat_id);
 
 // light
-const float daylight_ambient = 0.5;
+const float daylight_ambient = 0.3;
 const float nightlight_ambient = 0.1;
 vec3 ambient_light(vec3, vec3, float);
 vec3 diffusion_light(vec3, vec3, vec3, vec3, float);
@@ -29,7 +29,7 @@ vec3 rotate_y(vec3 v, float angle);
 vec3 rotate_z(vec3 v, float angle);
 
 // color
-#define GROUND vec3(0.678, 0.506, 0.455)
+#define GROUND normalize_rgb(vec3(182, 128, 115))
 #define GRASS normalize_rgb(vec3(193, 222, 129))
 
 vec3 normalize_rgb(vec3 rgb) {
@@ -79,7 +79,7 @@ Material materials[3] = Material[3](
 
 LightSource light_sources[1] = LightSource[1](
     LightSource(
-        vec3(-1.5, 2.0, -1.5),
+        vec3(-1.5, 1, -1.5),
         vec3(1.0, 1.0, 1.0)));
 
 vec2 grass_block(vec3 v, vec3 p, float extent, float height) {
@@ -112,10 +112,10 @@ vec2 scene(vec3 v) {
         res,
         sphere(v, vec3(0, 0, 0), 1, 0)
     );
-    // res = union_sdf(
-    //     res,
-    //     cube(v, light_sources[0].light_pos, vec3(0.1), 2)
-    // );
+    res = union_sdf(
+        res,
+        cube(v, light_sources[0].light_pos, vec3(0.1), 2)
+    );
 
     return vec2(
         res.x,
@@ -212,12 +212,13 @@ void main() {
             vec3 light_dir = normalize(ls.light_pos - p);
             vec2 shadow_res = ray_march(p + n * 0.001, light_dir);
             // without the n * eps, the ray will be blocked by the surface
+            vec2 light_res = ray_march(ls.light_pos, -light_dir);
             float shadow_dist = shadow_res.x;
-            if (shadow_dist < length(ls.light_pos - p)-1) {
+            if (shadow_res.x + 2 * abs(light_res.x)< length(ls.light_pos - p)) {
                 dif_color *= 0.3;
             }
         }
-        // dif_color += ambient_light(hit_material.ambient_color, vec3(1, 1, 1), daylight_ambient);
+        dif_color += ambient_light(hit_material.ambient_color, vec3(1, 1, 1), daylight_ambient);
 
         if (DEBUG_SDF) {
             FragColor = vec4(vec3(dist / 5.0), 1.0);
