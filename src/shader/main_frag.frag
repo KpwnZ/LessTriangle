@@ -19,6 +19,7 @@ const float daylight_ambient = 0.8;
 const float nightlight_ambient = 0.1;
 vec3 ambient_light(vec3, vec3, float);
 vec3 diffusion_light(vec3, vec3, vec3, vec3, float, float);
+vec3 specular_light(vec3, vec3, vec3, vec3, float);
 
 // SDF
 vec2 union_sdf(vec2 sdf1, vec2 sdf2);
@@ -186,17 +187,12 @@ vec2 scene(vec3 v) {
         res,
         cube(v, light_sources[0].light_pos, vec3(0.1), 2)
     );
-
-    vec2 pan = smooth_intersection_sdf(
-        sphere(v, vec3(0, 0, -2.5), 0.5, 2), 
-        sphere(v, vec3(0, 0, -2), 0.5, 2),
-        0.1
-    );
     
     res = union_sdf(
         res,
-        pan
+        sphere(v, vec3(0, 0, 0), 0.5, 1)
     );
+    
 
     return vec2(
         res.x,
@@ -243,6 +239,23 @@ vec2 ray_march(vec3 start, vec3 dir) {
     return vec2(depth, res.y);
 }
 
+float soft_shadow(vec3 ro, vec3 rd, float mint, float maxt) {
+    float res = 1.0;
+    float t = mint;
+
+    for(int i = 0; i < MAX_STEP; i++) {
+        float h = scene(ro + rd * t).x;
+        res = min(res, 8.0 * h / t);
+        t += clamp(h, 0.02, 0.10);
+        if (t > maxt || h < SURFACE) {
+            break;
+        }
+    }
+
+    return clamp(res, 0.3, 1.0);
+}
+
+
 /**
  * Calculate the transform matrix for ray direction, similar to lookat()
  * 
@@ -279,28 +292,34 @@ void main() {
 
         // TODO: add lighting
         vec3 dif_color = vec3(0);
-        // for (int i = 0; i < 2; ++i) {
-        //     LightSource ls = light_sources[i];
-        //     float light_dist = length(ls.light_pos - p);
-        //     float attenuation = 1.0 / (1.0 + 0.7 * light_dist + 1.80 * light_dist * light_dist);
-        //     dif_color += diffusion_light(
-        //         p, ls.light_pos,
-        //         ls.light_color, hit_material.diffuse_color,
-        //         hit_material.k_d, ls.intensity) * attenuation;
-        // }
-        // for (int i = 0; i < 2; ++i) {
-        //     LightSource ls = light_sources[i];
-        //     // find shadow
-        //     vec3 n = normal(p);
-        //     vec3 light_dir = normalize(ls.light_pos - p);
-        //     vec2 shadow_res = ray_march(p + n * 0.001, light_dir);
-        //     // without the n * eps, the ray will be blocked by the surface
-        //     vec2 light_res = ray_march(ls.light_pos, -light_dir);
-        //     float shadow_dist = shadow_res.x;
-        //     if (shadow_res.x + 2 * abs(light_res.x)< length(ls.light_pos - p)) {
-        //         dif_color *= 0.3;
-        //     }
-        // }
+        for (int i = 0; i < 2; ++i) {
+            LightSource ls = light_sources[i];
+            float light_dist = length(ls.light_pos - p);
+            float attenuation = 1.0 / (1.0 + 0.7 * light_dist + 1.80 * light_dist * light_dist);
+            dif_color += diffusion_light(
+                p, ls.light_pos,
+                ls.light_color, hit_material.diffuse_color,
+                hit_material.k_d, ls.intensity) * attenuation;
+            dif_color += specular_light(
+                p, normalize(ls.light_pos - p),
+                ls.light_color, vec3(1.0), 10.0);
+        }
+        for (int i = 0; i < 2; ++i) {
+            LightSource ls = light_sources[i];
+            // find shadow
+            vec3 n = normal(p);
+            vec3 light_dir = normalize(ls.light_pos - p);
+            
+            // vec2 shadow_res = ray_march(p + n * 0.001, light_dir);
+            // without the n * eps, the ray will be blocked by the surface
+            // vec2 light_res = ray_march(ls.light_pos, -light_dir);
+            // float shadow_dist = shadow_res.x;
+            // if (shadow_res.x + 2 * abs(light_res.x)< length(ls.light_pos - p)) {
+            //     dif_color *= 0.3;
+            // } 
+            
+            dif_color *= soft_shadow(p + n * 0.001, light_dir, 0.1, length(ls.light_pos - p) - 0.4);
+        }
         dif_color += ambient_light(hit_material.ambient_color, vec3(1, 1, 1), daylight_ambient);
 
         if (DEBUG_SDF) {
