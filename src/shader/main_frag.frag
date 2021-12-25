@@ -15,7 +15,7 @@ vec2 cube(vec3 v, vec3 p, vec3 size, int mat_id);
 vec2 rounded_cube(vec3 v, vec3 p, vec3 size, float r, int mat_id);
 
 // light
-const float daylight_ambient = 0.5;
+const float daylight_ambient = 0.8;
 const float nightlight_ambient = 0.1;
 vec3 ambient_light(vec3, vec3, float);
 vec3 diffusion_light(vec3, vec3, vec3, vec3, float, float);
@@ -79,11 +79,16 @@ Material materials[3] = Material[3](
         0.0)
 );
 
-LightSource light_sources[1] = LightSource[1](
+LightSource light_sources[2] = LightSource[2](
     LightSource(
         vec3(-1.5, 1, 0),
         vec3(1.0, 1.0, 1.0),
-        1.3));
+        1.3),
+    LightSource(
+        vec3(1.5, 1, 1.5),
+        vec3(1.0, 1.0, 1.0),
+        1.3)
+);
 
 vec2 grass_block(vec3 v, vec3 p, float extent, float height) {
     vec2 block = union_sdf(
@@ -147,7 +152,7 @@ vec2 tree_block(vec3 v, vec3 p, float height) {
  * @return Distance from the ray to the scene
  */
 vec2 scene(vec3 v) {
-    vec2 ground = grass_block(v, vec3(0, -0.1, 0), 3, 0.2);
+    vec2 ground = grass_block(v, vec3(0, -0.2, 0), 3, 0.3);
     vec2 res = ground;
     for (int i = 0; i <= 3; ++i) {
         for (int j = 0; j <= 3 - i + 1; ++j) {
@@ -159,6 +164,14 @@ vec2 scene(vec3 v) {
             );
         }
     }
+    res = union_sdf(
+        res,
+        grass_block(v, vec3(1, 0.1, 1), 1, 0.15)
+    );
+    res = union_sdf(
+        res,
+        grass_block(v, vec3(1.25, 0.25, 1.25), 0.5, 0.15)
+    );
     res = union_sdf(
         res,
         //sphere(v, vec3(0, 0, 0), 1, 0)
@@ -250,28 +263,28 @@ void main() {
 
         // TODO: add lighting
         vec3 dif_color = vec3(0);
-        for (int i = 0; i < 1; ++i) {
-            LightSource ls = light_sources[i];
-            float light_dist = length(ls.light_pos - p);
-            float attenuation = 1.0 / (1.0 + 0.7 * light_dist + 1.80 * light_dist * light_dist);
-            dif_color += diffusion_light(
-                p, ls.light_pos,
-                ls.light_color, hit_material.diffuse_color,
-                hit_material.k_d, ls.intensity) * attenuation;
-        }
-        for (int i = 0; i < 1; ++i) {
-            LightSource ls = light_sources[i];
-            // find shadow
-            vec3 n = normal(p);
-            vec3 light_dir = normalize(ls.light_pos - p);
-            vec2 shadow_res = ray_march(p + n * 0.001, light_dir);
-            // without the n * eps, the ray will be blocked by the surface
-            vec2 light_res = ray_march(ls.light_pos, -light_dir);
-            float shadow_dist = shadow_res.x;
-            if (shadow_res.x + 2 * abs(light_res.x)< length(ls.light_pos - p)) {
-                dif_color *= 0.3;
-            }
-        }
+        // for (int i = 0; i < 2; ++i) {
+        //     LightSource ls = light_sources[i];
+        //     float light_dist = length(ls.light_pos - p);
+        //     float attenuation = 1.0 / (1.0 + 0.7 * light_dist + 1.80 * light_dist * light_dist);
+        //     dif_color += diffusion_light(
+        //         p, ls.light_pos,
+        //         ls.light_color, hit_material.diffuse_color,
+        //         hit_material.k_d, ls.intensity) * attenuation;
+        // }
+        // for (int i = 0; i < 2; ++i) {
+        //     LightSource ls = light_sources[i];
+        //     // find shadow
+        //     vec3 n = normal(p);
+        //     vec3 light_dir = normalize(ls.light_pos - p);
+        //     vec2 shadow_res = ray_march(p + n * 0.001, light_dir);
+        //     // without the n * eps, the ray will be blocked by the surface
+        //     vec2 light_res = ray_march(ls.light_pos, -light_dir);
+        //     float shadow_dist = shadow_res.x;
+        //     if (shadow_res.x + 2 * abs(light_res.x)< length(ls.light_pos - p)) {
+        //         dif_color *= 0.3;
+        //     }
+        // }
         dif_color += ambient_light(hit_material.ambient_color, vec3(1, 1, 1), daylight_ambient);
 
         if (DEBUG_SDF) {

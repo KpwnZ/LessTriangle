@@ -146,8 +146,7 @@ int main(int argc, char **argv, char **envp) {
 
     std::vector<const char *> shaders = {
         "../src/shader/main_frag.frag",
-        "../src/shader/sphere.frag",
-        "../src/shader/cube.frag",
+        "../src/shader/geometry.frag",
         "../src/shader/lighting_model.frag",
         "../src/shader/sdf.frag",
         "../src/shader/transform.frag",

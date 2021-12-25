@@ -1,6 +1,22 @@
 #version 330 core
 
 /**
+ * SDF of sphere
+ *
+ * @param[in] vector        Input vector
+ * @param[in] position      Position of the vertex
+ * @param[in] radius        Radius of the sphere
+ * @param[in] material ID   Material of the sphere
+ *
+ * @return Distance from the vertex to the sphere
+ */
+vec2 sphere(vec3 v, vec3 p, float r, int mat_id) {
+    return vec2(
+        length(v - p) - r,
+        mat_id);
+}
+
+/**
  * SDF of cube
  * 
  * @param[in] vector    Input vector
@@ -11,14 +27,14 @@
  * @return Distance to the cube
  */
 vec2 cube(vec3 v, vec3 p, vec3 size, int mat_id) {
-    vec3 d = abs(v - p) - (size / 2);     // size = (l, w, h), 
-                                          // d.axis < 0 means the corresponding 
-                                          // point is inside the box
+    vec3 d = abs(v - p) - (size / 2);  // size = (l, w, h),
+                                       // d.axis < 0 means the corresponding
+                                       // point is inside the box
     vec3 dd = d;
     dd.x = max(d.x, 0);
     dd.y = max(d.y, 0);
     dd.z = max(d.z, 0);
-    float di = min(max(d.x, max(d.y, d.z)), 0.0) + length(dd);   
+    float di = min(max(d.x, max(d.y, d.z)), 0.0) + length(dd);
     // notice that we use abs() before
     // then length(d) will return the distance to the surface of cube
     // if the point is outside the box.
@@ -42,4 +58,3 @@ vec2 rounded_cube(vec3 v, vec3 p, vec3 size, float r, int mat_id) {
     // if the point is inside the box
     return vec2(di, mat_id);
 }
-
