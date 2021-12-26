@@ -182,8 +182,18 @@ vec2 tree_block(vec3 v, vec3 p, float height) {
 }
 
 vec2 streetlamp_block(vec3 v, vec3 p) {
-    vec2 base = cube(v, vec3(p.x, p.y+0.0005, p.z), vec3(0.01, 0.001, 0.01), LAMP_MATERIAL);
-    return base;
+    vec2 base = cube(v, vec3(p.x, p.y+0.001, p.z), vec3(0.06, 0.002, 0.06), LAMP_MATERIAL);
+    base = union_sdf(
+        base,
+        cube(v, vec3(p.x, p.y+0.002+0.015, p.z), vec3(0.03, 0.12, 0.03), LAMP_MATERIAL)
+    );
+    base = union_sdf(
+        base,
+        cube(v, vec3(p.x, p.y+0.002+0.001+0.35, p.z), vec3(0.035, 0.002, 0.035), LAMP_MATERIAL)
+    );
+    vec2 cylinder = capped_cylinder(v, vec3(p.x, p.y+0.002+0.15, p.z), 0.3, 0.006, LAMP_MATERIAL);
+    vec2 lamp = union_sdf(base, cylinder);
+    return lamp;
 }
 
 /**
@@ -222,6 +232,11 @@ vec2 scene(vec3 v) {
     res = union_sdf(
         res,
         cube(v, light_sources[0].light_pos, vec3(0.1), 2)
+    );
+
+    res = union_sdf(
+        res,
+        streetlamp_block(v, vec3(0, 0.1+0.01, 0))
     );
 
     return vec2(res.x, res.y);
@@ -311,7 +326,7 @@ void main() {
     vec2 __resolution = resolution;
     vec2 ratio = vec2(__resolution.x / __resolution.y, 1.0);
     vec2 uv = ratio * (gl_FragCoord.xy / __resolution.xy - 0.5);
-    vec3 ro = vec3(3, 3, -3);
+    vec3 ro = vec3(0, 1, -3);
     mat3 cm = camera_mat(ro, vec3(0, 1, 0), vec3(0, 0, 0));
     vec3 rd = cm * normalize(vec3(uv.x, uv.y, 1.));
 
