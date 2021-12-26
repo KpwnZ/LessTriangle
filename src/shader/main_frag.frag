@@ -3,7 +3,7 @@
 
 #define MAX_STEP 100
 #define MAX_DISTANCE 100
-#define SURFACE 0.001
+#define SURFACE 0.0001
 #define DEBUG_SDF false
 
 out vec4 FragColor;  // gl style...
@@ -16,6 +16,7 @@ vec2 rounded_cube(vec3 v, vec3 p, vec3 size, float r, int mat_id);
 vec2 torus(vec3, vec3, vec2, int);
 vec2 cone(vec3, vec3, vec2, float, int);
 vec2 capped_cylinder(vec3, vec3, float, float, int);
+vec2 pyramid(vec3, vec3, float, int);
 
 // light
 const float daylight_ambient = 0.8;
@@ -43,6 +44,12 @@ vec3 rotate(vec3 v, vec3 n, float angle);
 #define GROUND normalize_rgb(vec3(182, 128, 115))
 #define GRASS normalize_rgb(vec3(193, 222, 129))
 
+// material ID
+#define GROUND_MATERIAL 0
+#define GRASS_MATERIAL  1
+#define TRUNK           2
+#define LAMP_MATERIAL   3
+
 vec3 normalize_rgb(vec3 rgb) {
     return rgb / 255.0;
 }
@@ -55,7 +62,9 @@ float rand(vec2 co) {
 struct Material {
     vec3 ambient_color;
     vec3 diffuse_color;
+    vec3 spec_color;
     float k_d;
+    float shininess;
     // bool is_lighting;
     // vec3 light_color;
     // vec3 light_pos;
@@ -69,24 +78,33 @@ struct LightSource {
 
 // add new material here,
 // pass the index to sdf method as material id
-Material materials[3] = Material[3](
+Material materials[4] = Material[4](
     // ground id 0
     Material(
         GROUND,
         GROUND,
-        0.8
-    ),
+        GROUND,
+        0.8,
+        32),
     // grass id 1
     Material(
         GRASS,
         GRASS,
-        0.9
-    ),
+        GRASS,
+        0.9,
+        32),
     Material(
         normalize_rgb(vec3(201, 203, 45)),
         normalize_rgb(vec3(201, 203, 45)),
-        0.0)
-);
+        normalize_rgb(vec3(201, 203, 45)),
+        0.0,
+        32),
+    Material(
+        normalize_rgb(vec3(132, 126, 118)),
+        normalize_rgb(vec3(132, 126, 118)),
+        normalize_rgb(vec3(132, 126, 118)),
+        0.5,
+        32));
 
 LightSource light_sources[2] = LightSource[2](
     LightSource(
@@ -94,7 +112,7 @@ LightSource light_sources[2] = LightSource[2](
         vec3(1.0, 1.0, 1.0),
         1.3),
     LightSource(
-        vec3(1.5, 1, 1.5),
+        vec3(1.5, 1, 0),
         vec3(1.0, 1.0, 1.0),
         1.3)
 );
@@ -153,6 +171,11 @@ vec2 tree_block(vec3 v, vec3 p, float height) {
     return main_trunk;
 }
 
+vec2 streetlamp_block(vec3 v, vec3 p) {
+    vec2 base = cube(v, vec3(p.x, p.y+0.0005, p.z), vec3(0.01, 0.001, 0.01), LAMP_MATERIAL);
+    return base;
+}
+
 /**
  * scene sdf, construct the scene here with geometric primitives
  *
@@ -190,18 +213,8 @@ vec2 scene(vec3 v) {
         res,
         cube(v, light_sources[0].light_pos, vec3(0.1), 2)
     );
-    
-    res = union_sdf(
-        res,
-        torus(v, vec3(0, 1.0, 0), vec2(0.9, 0.3), 2)
-        // cone(v, vec3(0, 1.0, 0), vec2(3.0 / 5, 4.0 / 5), 0.5, 2)
-        // capped_cylinder(v, vec3(0, 1.0, 0), 0.2, 0.2, 2)
-    );
-    
 
-    return vec2(
-        res.x,
-        res.y);
+    return vec2(res.x, res.y);
 }
 
 /**
@@ -256,7 +269,6 @@ float soft_shadow(vec3 ro, vec3 rd, float mint, float maxt) {
             break;
         }
     }
-
     return clamp(res, 0.3, 1.0);
 }
 
@@ -308,7 +320,7 @@ void main() {
                 hit_material.k_d, ls.intensity) * attenuation;
             dif_color += specular_light(
                 p, normalize(ls.light_pos - p),
-                ls.light_color, vec3(1.0), 10.0);
+                ls.light_color, hit_material.spec_color, hit_material.shininess);
         }
         for (int i = 0; i < 2; ++i) {
             LightSource ls = light_sources[i];
@@ -317,12 +329,12 @@ void main() {
             vec3 light_dir = normalize(ls.light_pos - p);
             
             // vec2 shadow_res = ray_march(p + n * 0.001, light_dir);
-            // without the n * eps, the ray will be blocked by the surface
+            // // without the n * eps, the ray will be blocked by the surface
             // vec2 light_res = ray_march(ls.light_pos, -light_dir);
             // float shadow_dist = shadow_res.x;
             // if (shadow_res.x + 2 * abs(light_res.x)< length(ls.light_pos - p)) {
             //     dif_color *= 0.3;
-            // } 
+            // }
             
             dif_color *= soft_shadow(p + n * 0.001, light_dir, 0.1, length(ls.light_pos - p) - 0.4);
         }

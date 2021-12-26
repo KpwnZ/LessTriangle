@@ -41,3 +41,4 @@ vec3 specular_light(
     vec3 specular = spec_color * light_color * spec;
     return specular;
 }
+
