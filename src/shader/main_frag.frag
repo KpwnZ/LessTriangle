@@ -23,7 +23,7 @@ const float daylight_ambient = 0.8;
 const float nightlight_ambient = 0.1;
 vec3 ambient_light(vec3, vec3, float);
 vec3 diffusion_light(vec3, vec3, vec3, vec3, float, float);
-vec3 specular_light(vec3, vec3, vec3, vec3, float);
+vec3 specular_light(vec3, vec3, vec3, vec3, float, float);
 
 // SDF
 vec2 union_sdf(vec2 sdf1, vec2 sdf2);
@@ -64,6 +64,7 @@ struct Material {
     vec3 diffuse_color;
     vec3 spec_color;
     float k_d;
+    float k_s;
     float shininess;
     // bool is_lighting;
     // vec3 light_color;
@@ -85,25 +86,29 @@ Material materials[4] = Material[4](
         GROUND,
         GROUND,
         0.8,
-        32),
+        0.3,
+        3),
     // grass id 1
     Material(
         GRASS,
         GRASS,
         GRASS,
         0.9,
-        32),
+        0.3,
+        3),
     Material(
         normalize_rgb(vec3(201, 203, 45)),
         normalize_rgb(vec3(201, 203, 45)),
         normalize_rgb(vec3(201, 203, 45)),
         0.0,
+        0.3,
         32),
     Material(
         normalize_rgb(vec3(132, 126, 118)),
         normalize_rgb(vec3(132, 126, 118)),
         normalize_rgb(vec3(132, 126, 118)),
         0.5,
+        0.9,
         32));
 
 LightSource light_sources[2] = LightSource[2](
@@ -320,7 +325,7 @@ void main() {
                 hit_material.k_d, ls.intensity) * attenuation;
             dif_color += specular_light(
                 p, normalize(ls.light_pos - p),
-                ls.light_color, hit_material.spec_color, hit_material.shininess);
+                ls.light_color, hit_material.spec_color, hit_material.k_s, hit_material.shininess);
         }
         for (int i = 0; i < 2; ++i) {
             LightSource ls = light_sources[i];

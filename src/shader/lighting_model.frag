@@ -32,13 +32,14 @@ vec3 specular_light(
     vec3 light_dir,
     vec3 light_color,
     vec3 spec_color,
+    float k_s,
     float shininess) 
 {
     vec3 nor = normal(p);  // the normal vector
     vec3 view_dir = normalize(-p);
-    vec3 reflect_dir = reflect(-light_dir, nor);
-    float spec = pow(max(dot(view_dir, reflect_dir), 0.0), shininess);
-    vec3 specular = spec_color * light_color * spec;
+    vec3 reflect_dir = normalize(reflect(-light_dir, nor));
+    float spec = pow(clamp(dot(view_dir, reflect_dir), 0.0, 1.0), shininess);
+    vec3 specular = spec_color * light_color * spec * k_s;
     return specular;
 }
 
