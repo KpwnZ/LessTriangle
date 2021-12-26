@@ -66,6 +66,7 @@ struct Material {
     float k_d;
     float k_s;
     float shininess;
+    bool is_lightsource;
     // bool is_lighting;
     // vec3 light_color;
     // vec3 light_pos;
@@ -87,7 +88,8 @@ Material materials[4] = Material[4](
         GROUND,
         0.8,
         0.3,
-        3),
+        3,
+        false),
     // grass id 1
     Material(
         GRASS,
@@ -95,21 +97,24 @@ Material materials[4] = Material[4](
         GRASS,
         0.9,
         0.3,
-        3),
+        3,
+        false),
     Material(
         normalize_rgb(vec3(201, 203, 45)),
         normalize_rgb(vec3(201, 203, 45)),
         normalize_rgb(vec3(201, 203, 45)),
         0.0,
         0.3,
-        32),
+        32,
+        true),
     Material(
         normalize_rgb(vec3(132, 126, 118)),
         normalize_rgb(vec3(132, 126, 118)),
         normalize_rgb(vec3(132, 126, 118)),
         0.5,
         0.9,
-        32));
+        32,
+        false));
 
 LightSource light_sources[2] = LightSource[2](
     LightSource(
@@ -262,21 +267,28 @@ vec2 ray_march(vec3 start, vec3 dir) {
     return vec2(depth, res.y);
 }
 
-float soft_shadow(vec3 ro, vec3 rd, float mint, float maxt) {
+// Sebastian Aaltonen's soft shadow improvement
+float soft_shadow(in vec3 ro, in vec3 rd, float mint, float maxt, float k) {
     float res = 1.0;
-    float t = mint;
-
-    for(int i = 0; i < MAX_STEP; i++) {
-        float h = scene(ro + rd * t).x;
-        res = min(res, 8.0 * h / t);
-        t += clamp(h, 0.02, 0.10);
-        if (t > maxt || h < SURFACE) {
+    float ph = 1e20;
+    for (float t = mint; t < maxt;) {
+        vec2 hit = scene(ro + rd * t);
+        float h = hit.x;
+        Material mat = materials[int(hit.y)];
+        if (mat.is_lightsource) {
             break;
         }
+        if (h < 0.001)
+            return 0.0;
+        float h2 = pow(h, 2);
+        float y = h2/ (2.0 * ph);
+        float d = sqrt(h2 - y * y);
+        res = min(res, k * d / max(0.0, t - y));
+        ph = h;
+        t += h;
     }
-    return clamp(res, 0.3, 1.0);
+    return res;
 }
-
 
 /**
  * Calculate the transform matrix for ray direction, similar to lookat()
@@ -319,20 +331,12 @@ void main() {
             LightSource ls = light_sources[i];
             float light_dist = length(ls.light_pos - p);
             float attenuation = 1.0 / (1.0 + 0.7 * light_dist + 1.80 * light_dist * light_dist);
-            dif_color += diffusion_light(
-                p, ls.light_pos,
-                ls.light_color, hit_material.diffuse_color,
-                hit_material.k_d, ls.intensity) * attenuation;
-            dif_color += specular_light(
-                p, normalize(ls.light_pos - p),
-                ls.light_color, hit_material.spec_color, hit_material.k_s, hit_material.shininess);
-        }
-        for (int i = 0; i < 2; ++i) {
-            LightSource ls = light_sources[i];
+
+            // LightSource ls = light_sources[i];
             // find shadow
             vec3 n = normal(p);
             vec3 light_dir = normalize(ls.light_pos - p);
-            
+
             // vec2 shadow_res = ray_march(p + n * 0.001, light_dir);
             // // without the n * eps, the ray will be blocked by the surface
             // vec2 light_res = ray_march(ls.light_pos, -light_dir);
@@ -340,8 +344,36 @@ void main() {
             // if (shadow_res.x + 2 * abs(light_res.x)< length(ls.light_pos - p)) {
             //     dif_color *= 0.3;
             // }
+
+            vec2 light_res = ray_march(ls.light_pos, -light_dir);
+            vec3 light_surface = ls.light_pos - light_dir * light_res.x;
+            float shadow = soft_shadow(p + n * 0.001, light_dir, 0.1, length(ls.light_pos - p), 5);
+
+            dif_color += diffusion_light(
+                p, ls.light_pos,
+                ls.light_color, hit_material.diffuse_color,
+                hit_material.k_d, ls.intensity) * attenuation * shadow ;
+            dif_color += specular_light(
+                p, normalize(ls.light_pos - p),
+                ls.light_color, hit_material.spec_color, hit_material.k_s, hit_material.shininess) * shadow;
+        }
+        for (int i = 0; i < 2; ++i) {
+            // LightSource ls = light_sources[i];
+            // // find shadow
+            // vec3 n = normal(p);
+            // vec3 light_dir = normalize(ls.light_pos - p);
             
-            dif_color *= soft_shadow(p + n * 0.001, light_dir, 0.1, length(ls.light_pos - p) - 0.4);
+            // // vec2 shadow_res = ray_march(p + n * 0.001, light_dir);
+            // // // without the n * eps, the ray will be blocked by the surface
+            // // vec2 light_res = ray_march(ls.light_pos, -light_dir);
+            // // float shadow_dist = shadow_res.x;
+            // // if (shadow_res.x + 2 * abs(light_res.x)< length(ls.light_pos - p)) {
+            // //     dif_color *= 0.3;
+            // // }
+            
+            // vec2 light_res = ray_march(ls.light_pos, -light_dir);
+            // vec3 light_surface = ls.light_pos - light_dir * light_res.x;
+            // dif_color *= soft_shadow(p + n * 0.001, light_dir, 0.1, length(ls.light_pos - p), 5);
         }
         
         dif_color += ambient_light(hit_material.ambient_color, vec3(1, 1, 1), daylight_ambient);
