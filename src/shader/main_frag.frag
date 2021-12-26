@@ -297,7 +297,7 @@ void main() {
 
         // TODO: add lighting
         vec3 dif_color = vec3(0);
-        /*
+        
         for (int i = 0; i < 2; ++i) {
             LightSource ls = light_sources[i];
             float light_dist = length(ls.light_pos - p);
@@ -326,7 +326,7 @@ void main() {
             
             dif_color *= soft_shadow(p + n * 0.001, light_dir, 0.1, length(ls.light_pos - p) - 0.4);
         }
-        */
+        
         dif_color += ambient_light(hit_material.ambient_color, vec3(1, 1, 1), daylight_ambient);
 
         if (DEBUG_SDF) {
