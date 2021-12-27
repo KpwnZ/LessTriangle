@@ -16,7 +16,7 @@ vec2 rounded_cube(vec3 v, vec3 p, vec3 size, float r, int mat_id);
 vec2 torus(vec3, vec3, vec2, int);
 vec2 cone(vec3, vec3, vec2, float, int);
 vec2 capped_cylinder(vec3, vec3, float, float, int);
-vec2 pyramid(vec3, vec3, float, int);
+vec2 pyramid(vec3, vec3, float, float, int);
 
 // light
 const float daylight_ambient = 0.8;
@@ -50,6 +50,7 @@ vec3 rotate(vec3 v, vec3 n, float angle);
 #define TRUNK           2
 #define LAMP_MATERIAL   3
 #define LAMP_BLUB       4
+#define LAMP_MATERIAL2  5
 
 vec3 normalize_rgb(vec3 rgb) {
     return rgb / 255.0;
@@ -81,7 +82,7 @@ struct LightSource {
 
 // add new material here,
 // pass the index to sdf method as material id
-#define MATERIAL_CNT    5
+#define MATERIAL_CNT    6
 Material materials[MATERIAL_CNT] = Material[MATERIAL_CNT](
     // ground id 0
     Material(
@@ -114,8 +115,8 @@ Material materials[MATERIAL_CNT] = Material[MATERIAL_CNT](
         normalize_rgb(vec3(132, 126, 118)),
         normalize_rgb(vec3(132, 126, 118)),
         0.5,
-        0.9,
-        32,
+        0.5,
+        16,
         false),
     Material(
         normalize_rgb(vec3(250, 250, 250)),
@@ -124,19 +125,23 @@ Material materials[MATERIAL_CNT] = Material[MATERIAL_CNT](
         0.9,
         0.3,
         3,
-        true
-    )
+        true),
+    Material(
+        normalize_rgb(vec3(132, 126, 118)),
+        normalize_rgb(vec3(132, 126, 118)),
+        normalize_rgb(vec3(132, 126, 118)),
+        0.5,
+        0.5,
+        16,
+        false)
 );
 
-LightSource light_sources[2] = LightSource[2](
+#define LIGHT_CNT    1
+LightSource light_sources[LIGHT_CNT] = LightSource[LIGHT_CNT](
     LightSource(
-        vec3(-1.5, 1, 0),
+        vec3(-1, 0.11 + 2, 0),
         vec3(1.0, 1.0, 1.0),
-        1.3),
-    LightSource(
-        vec3(1.5, 1, 0),
-        vec3(1.0, 1.0, 1.0),
-        1.3)
+        2)
 );
 
 vec2 grass_block(vec3 v, vec3 p, float extent, float height) {
@@ -193,6 +198,7 @@ vec2 tree_block(vec3 v, vec3 p, float height) {
     return main_trunk;
 }
 
+// light source position = p.y + 0.529
 vec2 streetlamp_block(vec3 v, vec3 p) {
     vec2 base = cube(v, vec3(p.x, p.y+0.001, p.z), vec3(0.06, 0.002, 0.06), LAMP_MATERIAL);
     base = union_sdf(
@@ -206,6 +212,14 @@ vec2 streetlamp_block(vec3 v, vec3 p) {
     vec2 cylinder = capped_cylinder(v, vec3(p.x, p.y+0.002+0.25, p.z), 0.006, 0.5, LAMP_MATERIAL);
     vec2 light_block = cube(v, vec3(p.x, p.y+0.002+0.5+0.002+0.025, p.z), vec3(0.05, 0.05, 0.05), LAMP_BLUB);
     base = union_sdf(base, light_block);
+    base = union_sdf(
+        base,
+        cube(v, vec3(p.x, p.y+0.002+0.001+0.5+0.002+0.05+0.001, p.z), vec3(0.09, 0.002, 0.09), LAMP_MATERIAL)
+    );
+    base = union_sdf(
+        base,
+        pyramid(v, vec3(p.x, p.y+0.002+0.001+0.5+0.002+0.05+0.002, p.z), 0.05, 0.045, LAMP_MATERIAL)
+    );
     vec2 lamp = union_sdf(base, cylinder);
     return lamp;
 }
@@ -243,14 +257,10 @@ vec2 scene(vec3 v) {
         //sphere(v, vec3(0, 0, 0), 1, 0)
         tree_block(v, vec3(-1.5 + 0.15, 0.375+0.1, 1.5 - 0.15), 0.5)
     );
-    res = union_sdf(
-        res,
-        cube(v, light_sources[0].light_pos, vec3(0.1), 2)
-    );
 
     res = union_sdf(
         res,
-        streetlamp_block(v, vec3(0, 0.1+0.01, 0))
+        streetlamp_block(v, vec3(-1, 0.1+0.01, 0))
     );
 
     return vec2(res.x, res.y);
@@ -304,11 +314,11 @@ float soft_shadow(in vec3 ro, in vec3 rd, float mint, float maxt, float k) {
         vec2 hit = scene(ro + rd * t);
         float h = hit.x;
         Material mat = materials[int(hit.y)];
-        if (mat.is_lightsource) {
-            break;
-        }
-        if (h < 0.001)
+        if (h < SURFACE)
             return 0.0;
+        if (mat.is_lightsource) {
+            return res;
+        }
         float h2 = pow(h, 2);
         float y = h2/ (2.0 * ph);
         float d = sqrt(h2 - y * y);
@@ -340,7 +350,7 @@ void main() {
     vec2 __resolution = resolution;
     vec2 ratio = vec2(__resolution.x / __resolution.y, 1.0);
     vec2 uv = ratio * (gl_FragCoord.xy / __resolution.xy - 0.5);
-    vec3 ro = vec3(0, 1, -3);
+    vec3 ro = vec3(3, 3, -3);
     mat3 cm = camera_mat(ro, vec3(0, 1, 0), vec3(0, 0, 0));
     vec3 rd = cm * normalize(vec3(uv.x, uv.y, 1.));
 
@@ -356,7 +366,7 @@ void main() {
         // TODO: add lighting
         vec3 dif_color = vec3(0);
         
-        for (int i = 0; i < 2; ++i) {
+        for (int i = 0; i < LIGHT_CNT; ++i) {
             LightSource ls = light_sources[i];
             float light_dist = length(ls.light_pos - p);
             float attenuation = 1.0 / (1.0 + 0.7 * light_dist + 1.80 * light_dist * light_dist);
@@ -376,7 +386,7 @@ void main() {
 
             vec2 light_res = ray_march(ls.light_pos, -light_dir);
             vec3 light_surface = ls.light_pos - light_dir * light_res.x;
-            float shadow = soft_shadow(p + n * 0.001, light_dir, 0.1, length(ls.light_pos - p), 5);
+            float shadow = soft_shadow(p + n * 0.001, light_dir, SURFACE, length(ls.light_pos - p), 8);
 
             dif_color += diffusion_light(
                 p, ls.light_pos,
@@ -385,24 +395,6 @@ void main() {
             dif_color += specular_light(
                 p, normalize(ls.light_pos - p),
                 ls.light_color, hit_material.spec_color, hit_material.k_s, hit_material.shininess) * shadow;
-        }
-        for (int i = 0; i < 2; ++i) {
-            // LightSource ls = light_sources[i];
-            // // find shadow
-            // vec3 n = normal(p);
-            // vec3 light_dir = normalize(ls.light_pos - p);
-            
-            // // vec2 shadow_res = ray_march(p + n * 0.001, light_dir);
-            // // // without the n * eps, the ray will be blocked by the surface
-            // // vec2 light_res = ray_march(ls.light_pos, -light_dir);
-            // // float shadow_dist = shadow_res.x;
-            // // if (shadow_res.x + 2 * abs(light_res.x)< length(ls.light_pos - p)) {
-            // //     dif_color *= 0.3;
-            // // }
-            
-            // vec2 light_res = ray_march(ls.light_pos, -light_dir);
-            // vec3 light_surface = ls.light_pos - light_dir * light_res.x;
-            // dif_color *= soft_shadow(p + n * 0.001, light_dir, 0.1, length(ls.light_pos - p), 5);
         }
         
         dif_color += ambient_light(hit_material.ambient_color, vec3(1, 1, 1), daylight_ambient);

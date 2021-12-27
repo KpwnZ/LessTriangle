@@ -90,23 +90,23 @@ vec2 capped_cylinder(vec3 v, vec3 o, float r, float h, int mat_id) {
     return vec2(min(max(d.x, d.y), 0.0) + length(max(d, 0.0)), mat_id);
 }
 
-vec2 pyramid(vec3 v, vec3 p, float h, int mat_id) {
-    float m2 = h * h + 0.25;
+vec2 pyramid(vec3 v, vec3 p, float h, float va, int mat_id) {
+    float m2 = h * h + va / 2;
 
-    p = p - v;
+    p = v - p;
     p.xz = abs(p.xz);
     p.xz = (p.z > p.x) ? p.zx : p.xz;
-    p.xz -= 0.5;
+    p.xz -= va;
 
-    vec3 q = vec3(p.z, h * p.y - 0.5 * p.x, h * p.x + 0.5 * p.y);
+    vec3 q = vec3(p.z, h * p.y - va * p.x, h * p.x + va * p.y);
 
     float s = max(-q.x, 0.0);
-    float t = clamp((q.y - 0.5 * p.z) / (m2 + 0.25), 0.0, 1.0);
+    float t = clamp((q.y - va * p.z) / (m2 + va / 2), 0.0, 1.0);
 
     float a = m2 * (q.x + s) * (q.x + s) + q.y * q.y;
-    float b = m2 * (q.x + 0.5 * t) * (q.x + 0.5 * t) + (q.y - m2 * t) * (q.y - m2 * t);
+    float b = m2 * (q.x + va * t) * (q.x + va * t) + (q.y - m2 * t) * (q.y - m2 * t);
 
-    float d2 = min(q.y, -q.x * m2 - q.y * 0.5) > 0.0 ? 0.0 : min(a, b);
+    float d2 = min(q.y, -q.x * m2 - q.y * va) > 0.0 ? 0.0 : min(a, b);
 
     return vec2(sqrt((d2 + q.z * q.z) / m2) * sign(max(q.z, -p.y)), mat_id);
 }
