@@ -48,6 +48,7 @@ vec3 symmetric_y(vec3, vec2);
 #define GROUND normalize_rgb(vec3(182, 128, 115))
 #define GRASS normalize_rgb(vec3(193, 222, 129))
 #define BENCH1 normalize_rgb(vec3(150, 135, 65))
+#define WATER normalize_rgb(vec3(96, 202, 211))
 
 // material ID
 #define GROUND_MATERIAL 0
@@ -58,6 +59,7 @@ vec3 symmetric_y(vec3, vec2);
 #define LAMP_MATERIAL2  5
 #define BENCH_MATERIAL  6
 #define BENCH_SURFACE_MATERIAL 7
+#define WATER_MATERIAL  8
 
 vec3 normalize_rgb(vec3 rgb) {
     return rgb / 255.0;
@@ -89,7 +91,7 @@ struct LightSource {
 
 // add new material here,
 // pass the index to sdf method as material id
-#define MATERIAL_CNT    8
+#define MATERIAL_CNT    9
 Material materials[MATERIAL_CNT] = Material[MATERIAL_CNT](
     // ground id 0
     Material(
@@ -156,11 +158,24 @@ Material materials[MATERIAL_CNT] = Material[MATERIAL_CNT](
         0.9,
         0.3,
         32,
-        false)
+        false),
+    Material(
+        WATER,
+        WATER,
+        WATER,
+        0.3,
+        3,
+        16,
+        false
+    )
 );
 
-#define LIGHT_CNT    1
+#define LIGHT_CNT    2
 LightSource light_sources[LIGHT_CNT] = LightSource[LIGHT_CNT](
+    LightSource(
+        vec3(-2, 1, -2),
+        vec3(1, 1, 1),
+        1.3),
     LightSource(
         vec3(-1, 0.11 + 2, 0),
         vec3(0.9191, 0.8109, 0.0659),
@@ -318,11 +333,13 @@ vec2 bench_block(vec3 v, vec3 p) {
  */
 vec2 scene(vec3 v) {
     vec2 ground = grass_block(v, vec3(0, -0.2, 0), 3, 0.3);
-    vec2 riverbed = cube(v, vec3(0, -0.1, 0), vec3(1, 1, 3), 0);
+    vec2 riverbed = cube(v, vec3(0, -0.1 + 0.12, 0), vec3(1, 0.2, 5), 0);
+    vec2 river = cube(v, vec3(0, -0.05, 0), vec3(1, 0.2, 3), WATER_MATERIAL);
     ground = substraction_sdf(riverbed, ground);
+    ground = union_sdf(ground, river);
     vec2 res = ground;
-    for (int i = 0; i <= 3; ++i) {
-        for (int j = 0; j <= 3 - i + 1; ++j) {
+    for (int i = 0; i < 3; ++i) {
+        for (int j = 0; j < 3 - i + 1; ++j) {
             int h = (3 - i + 1 - j);
             if(h == 4) h = 3;
             res = union_sdf(
@@ -355,10 +372,10 @@ vec2 scene(vec3 v) {
         bench_block(v, vec3(-0.5, 0.1, 0))
     );
 
-    res = union_sdf(
-        res,
-        cube(symmetric_y(v, vec2(0, 0)), vec3(0.3), vec3(0.1), BENCH_SURFACE_MATERIAL)
-    );
+    // res = union_sdf(
+    //     res,
+    //     cube(symmetric_y(v, vec2(0, 0)), vec3(0.3), vec3(0.1), BENCH_SURFACE_MATERIAL)
+    // );
 
     return vec2(res.x, res.y);
 }
@@ -447,7 +464,7 @@ void main() {
     vec2 __resolution = resolution;
     vec2 ratio = vec2(__resolution.x / __resolution.y, 1.0);
     vec2 uv = ratio * (gl_FragCoord.xy / __resolution.xy - 0.5);
-    vec3 ro = vec3(3, 3, -3);
+    vec3 ro = vec3(0, 3, -3);
     // vec3 ro = vec3(1, 1, -1);
     mat3 cm = camera_mat(ro, vec3(0, 1, 0), vec3(0, 0, 0));
     vec3 rd = cm * normalize(vec3(uv.x, uv.y, 1.));
