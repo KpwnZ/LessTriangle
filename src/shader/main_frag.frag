@@ -364,7 +364,7 @@ vec2 scene(vec3 v) {
 
     res = union_sdf(
         res,
-        bench_block(v, vec3(-0.5, 0.1, 0))
+        bench_block(v, vec3(-0.7, 0.1, 0))
     );
 
     vec2 box1 = cube(v, vec3(-1.5+0.45, 0.11+0.405/2, 1.5-1.2/2), vec3(0.9, 0.405, 1.2), 0);
