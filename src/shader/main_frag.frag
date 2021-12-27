@@ -249,6 +249,11 @@ vec2 streetlamp_block(vec3 v, vec3 p) {
     );
     vec2 cylinder = capped_cylinder(v, vec3(p.x, p.y+0.002+0.25, p.z), 0.006, 0.5, LAMP_MATERIAL);
     vec2 light_block = cube(v, vec3(p.x, p.y+0.002+0.5+0.002+0.025, p.z), vec3(0.05, 0.05, 0.05), LAMP_BLUB);
+    vec2 pillar = cube(
+        symmetric_y(v, p.xz), 
+        vec3(0.02625, p.y+0.002+0.5+0.002+0.025, 0.02625), 
+        vec3(0.0025, 0.05, 0.0025), LAMP_MATERIAL);
+    base = union_sdf(base, pillar);
     base = union_sdf(base, light_block);
     base = union_sdf(
         base,
@@ -371,11 +376,6 @@ vec2 scene(vec3 v) {
         res,
         bench_block(v, vec3(-0.5, 0.1, 0))
     );
-
-    // res = union_sdf(
-    //     res,
-    //     cube(symmetric_y(v, vec2(0, 0)), vec3(0.3), vec3(0.1), BENCH_SURFACE_MATERIAL)
-    // );
 
     return vec2(res.x, res.y);
 }

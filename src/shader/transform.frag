@@ -43,6 +43,12 @@ vec3 bend(vec3 p, float k) {
     return vec3(m * p.xy, p.z);
 }
 
+/*
+    Return the distance to axis.
+    Example: 
+    cube(symmetric_y(v, axis), p, size, mat_id);
+    p should be the coordinate relative to the axis.
+*/
 vec3 symmetric_y(vec3 p, vec2 axis) {
     return vec3(abs(p.x - axis.x), p.y, abs(p.z - axis.y));
 }
