@@ -41,6 +41,7 @@ vec3 rotate_z(vec3 v, float angle);
 vec3 rotate(vec3 v, vec3 n, float angle);
 vec3 twist(vec3, float);
 vec3 bend(vec3, float);
+vec3 symmetric_y(vec3, vec2);
 
 // color
 #define SKY normalize_rgb(vec3(199, 235, 237))
@@ -350,6 +351,11 @@ vec2 scene(vec3 v) {
     res = union_sdf(
         res,
         bench_block(v, vec3(-0.5, 0.1, 0))
+    );
+
+    res = union_sdf(
+        res,
+        cube(symmetric_y(v, vec2(0, 0)), vec3(0.3), vec3(0.1), BENCH_SURFACE_MATERIAL)
     );
 
     return vec2(res.x, res.y);
