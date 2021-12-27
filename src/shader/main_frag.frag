@@ -49,6 +49,7 @@ vec3 rotate(vec3 v, vec3 n, float angle);
 #define GRASS_MATERIAL  1
 #define TRUNK           2
 #define LAMP_MATERIAL   3
+#define LAMP_BLUB       4
 
 vec3 normalize_rgb(vec3 rgb) {
     return rgb / 255.0;
@@ -80,7 +81,8 @@ struct LightSource {
 
 // add new material here,
 // pass the index to sdf method as material id
-Material materials[4] = Material[4](
+#define MATERIAL_CNT    5
+Material materials[MATERIAL_CNT] = Material[MATERIAL_CNT](
     // ground id 0
     Material(
         GROUND,
@@ -114,7 +116,17 @@ Material materials[4] = Material[4](
         0.5,
         0.9,
         32,
-        false));
+        false),
+    Material(
+        normalize_rgb(vec3(250, 250, 250)),
+        normalize_rgb(vec3(250, 250, 250)),
+        normalize_rgb(vec3(250, 250, 250)),
+        0.9,
+        0.3,
+        3,
+        true
+    )
+);
 
 LightSource light_sources[2] = LightSource[2](
     LightSource(
@@ -189,9 +201,11 @@ vec2 streetlamp_block(vec3 v, vec3 p) {
     );
     base = union_sdf(
         base,
-        cube(v, vec3(p.x, p.y+0.002+0.001+0.35, p.z), vec3(0.035, 0.002, 0.035), LAMP_MATERIAL)
+        cube(v, vec3(p.x, p.y+0.002+0.001+0.5, p.z), vec3(0.06, 0.002, 0.06), LAMP_MATERIAL)
     );
-    vec2 cylinder = capped_cylinder(v, vec3(p.x, p.y+0.002+0.15, p.z), 0.3, 0.006, LAMP_MATERIAL);
+    vec2 cylinder = capped_cylinder(v, vec3(p.x, p.y+0.002+0.25, p.z), 0.006, 0.5, LAMP_MATERIAL);
+    vec2 light_block = cube(v, vec3(p.x, p.y+0.002+0.5+0.002+0.025, p.z), vec3(0.05, 0.05, 0.05), LAMP_BLUB);
+    base = union_sdf(base, light_block);
     vec2 lamp = union_sdf(base, cylinder);
     return lamp;
 }

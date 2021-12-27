@@ -85,7 +85,8 @@ vec2 cone(vec3 v, vec3 o, vec2 c, float h, int mat_id) {
 
 vec2 capped_cylinder(vec3 v, vec3 o, float r, float h, int mat_id) {
     vec3 p = v - o;
-    vec2 d = abs(vec2(length(p.xz), p.y)) - vec2(h, r);
+    h /= 2;
+    vec2 d = abs(vec2(length(p.xz), p.y)) - vec2(r, h);
     return vec2(min(max(d.x, d.y), 0.0) + length(max(d, 0.0)), mat_id);
 }
 
