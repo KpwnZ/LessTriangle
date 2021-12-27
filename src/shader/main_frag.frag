@@ -281,6 +281,8 @@ vec2 bench_block(vec3 v, vec3 p) {
  */
 vec2 scene(vec3 v) {
     vec2 ground = grass_block(v, vec3(0, -0.2, 0), 3, 0.3);
+    vec2 riverbed = cube(v, vec3(0, -0.1, 0), vec3(1, 1, 3), 0);
+    ground = substraction_sdf(riverbed, ground);
     vec2 res = ground;
     for (int i = 0; i <= 3; ++i) {
         for (int j = 0; j <= 3 - i + 1; ++j) {
@@ -403,8 +405,8 @@ void main() {
     vec2 __resolution = resolution;
     vec2 ratio = vec2(__resolution.x / __resolution.y, 1.0);
     vec2 uv = ratio * (gl_FragCoord.xy / __resolution.xy - 0.5);
-    // vec3 ro = vec3(3, 3, -3);
-    vec3 ro = vec3(1, 1, -1);
+    vec3 ro = vec3(3, 3, -3);
+    // vec3 ro = vec3(1, 1, -1);
     mat3 cm = camera_mat(ro, vec3(0, 1, 0), vec3(0, 0, 0));
     vec3 rd = cm * normalize(vec3(uv.x, uv.y, 1.));
 
