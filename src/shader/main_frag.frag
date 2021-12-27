@@ -343,16 +343,7 @@ vec2 scene(vec3 v) {
     ground = substraction_sdf(riverbed, ground);
     ground = union_sdf(ground, river);
     vec2 res = ground;
-    for (int i = 0; i < 3; ++i) {
-        for (int j = 0; j < 3 - i + 1; ++j) {
-            int h = (3 - i + 1 - j);
-            if(h == 4) h = 3;
-            res = union_sdf(
-                res,
-                grass_block(v, vec3(-1.5+(2 * i + 1) * 0.15, 0.1, 1.5-(2 * j + 1) * 0.15), 0.3, h * 0.125)
-            );
-        }
-    }
+
     res = union_sdf(
         res,
         grass_block(v, vec3(1, 0.1, 1), 1, 0.15)
@@ -363,7 +354,6 @@ vec2 scene(vec3 v) {
     );
     res = union_sdf(
         res,
-        //sphere(v, vec3(0, 0, 0), 1, 0)
         tree_block(v, vec3(-1.5 + 0.15, 0.375+0.1, 1.5 - 0.15), 0.5)
     );
 
@@ -376,6 +366,20 @@ vec2 scene(vec3 v) {
         res,
         bench_block(v, vec3(-0.5, 0.1, 0))
     );
+
+    vec2 box1 = cube(v, vec3(-1.5+0.45, 0.11+0.405/2, 1.5-1.2/2), vec3(0.9, 0.405, 1.2), 0);
+
+    if(box1.x <= res.x) {
+        for (int i = 0; i < 3; ++i) {
+            for (int j = 0; j < 3 - i + 1; ++j) {
+                int h = (3 - i + 1 - j);
+                if (h == 4) h = 3;
+                res = union_sdf(
+                    res,
+                    grass_block(v, vec3(-1.5 + (2 * i + 1) * 0.15, 0.1, 1.5 - (2 * j + 1) * 0.15), 0.3, h * 0.125));
+            }
+        }
+    }
 
     return vec2(res.x, res.y);
 }
