@@ -246,6 +246,10 @@ vec2 streetlamp_block(vec3 v, vec3 p) {
     return lamp;
 }
 
+/*
+    vec3 p is the center of the bottom.
+    The const data could be changed to create defferent sizes of benches. 
+*/
 vec2 bench_block(vec3 v, vec3 p) {
     const float length = 0.3;
     const float height = 0.06;
