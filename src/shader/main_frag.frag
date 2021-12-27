@@ -227,6 +227,33 @@ vec2 streetlamp_block(vec3 v, vec3 p) {
     return lamp;
 }
 
+vec2 bench_block(vec3 v, vec3 p) {
+    vec2 bench = cube(v, vec3(p.x, p.y + 0.2, p.z), vec3(0.2, 0.02, 0.02), 0);
+    bench = union_sdf(
+        bench,
+        cube(v, vec3(p.x, p.y + 0.2, p.z + 0.025), vec3(0.2, 0.02, 0.02), 0)
+    );
+    bench = union_sdf(
+        bench,
+        cube(v, vec3(p.x, p.y + 0.2, p.z + 0.025 * 2), vec3(0.2, 0.02, 0.02), 0)
+    );
+    bench = union_sdf(
+        bench,
+        cube(v, vec3(p.x, p.y + 0.2, p.z + 0.025 * 3), vec3(0.2, 0.02, 0.02), 0)
+    );
+    
+    bench = union_sdf(
+        bench,
+        cube(v, vec3(p.x - 0.1, p.y + 0.1 + 0.05, p.z + 0.05), vec3(0.02, 0.1, 0.1), 0)
+    );
+    bench = union_sdf(
+        bench,
+        cube(v, vec3(p.x + 0.1, p.y + 0.1 + 0.05, p.z + 0.05), vec3(0.02, 0.1, 0.1), 0)
+    );
+
+    return bench;
+}
+
 /**
  * scene sdf, construct the scene here with geometric primitives
  *
@@ -264,6 +291,11 @@ vec2 scene(vec3 v) {
     res = union_sdf(
         res,
         streetlamp_block(v, vec3(-1, 0.1+0.01, 0))
+    );
+
+    res = union_sdf(
+        res,
+        bench_block(v, vec3(-0.5, 0, 0))
     );
 
     return vec2(res.x, res.y);
@@ -353,7 +385,8 @@ void main() {
     vec2 __resolution = resolution;
     vec2 ratio = vec2(__resolution.x / __resolution.y, 1.0);
     vec2 uv = ratio * (gl_FragCoord.xy / __resolution.xy - 0.5);
-    vec3 ro = vec3(3, 3, -3);
+    //vec3 ro = vec3(3, 3, -3);
+    vec3 ro = vec3(1, 1, -1);
     mat3 cm = camera_mat(ro, vec3(0, 1, 0), vec3(0, 0, 0));
     vec3 rd = cm * normalize(vec3(uv.x, uv.y, 1.));
 
