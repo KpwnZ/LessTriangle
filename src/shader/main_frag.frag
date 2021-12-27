@@ -120,7 +120,7 @@ Material materials[MATERIAL_CNT] = Material[MATERIAL_CNT](
         normalize_rgb(vec3(132, 126, 118)),
         normalize_rgb(vec3(132, 126, 118)),
         normalize_rgb(vec3(132, 126, 118)),
-        0.5,
+        0.9,
         0.5,
         16,
         false),
@@ -136,7 +136,7 @@ Material materials[MATERIAL_CNT] = Material[MATERIAL_CNT](
         normalize_rgb(vec3(132, 126, 118)),
         normalize_rgb(vec3(132, 126, 118)),
         normalize_rgb(vec3(132, 126, 118)),
-        0.5,
+        0.9 ,
         0.5,
         16,
         false),
@@ -162,8 +162,8 @@ Material materials[MATERIAL_CNT] = Material[MATERIAL_CNT](
 LightSource light_sources[LIGHT_CNT] = LightSource[LIGHT_CNT](
     LightSource(
         vec3(-1, 0.11 + 2, 0),
-        vec3(1.0, 1.0, 1.0),
-        2)
+        vec3(0.9191, 0.8109, 0.0659),
+        0.9)
 );
 
 vec2 grass_block(vec3 v, vec3 p, float extent, float height) {
@@ -246,7 +246,6 @@ vec2 streetlamp_block(vec3 v, vec3 p) {
     return lamp;
 }
 
- // -----|-.-|
 vec2 bench_block(vec3 v, vec3 p) {
     const float length = 0.2;
     const float height = 0.08;
@@ -483,9 +482,11 @@ void main() {
                 p, normalize(ls.light_pos - p),
                 ls.light_color, hit_material.spec_color, hit_material.k_s, hit_material.shininess) * shadow;
         }
-        
-        dif_color += ambient_light(hit_material.ambient_color, vec3(1, 1, 1), daylight_ambient);
 
+        dif_color += ambient_light(hit_material.ambient_color, vec3(1, 1, 1), daylight_ambient);
+        if(hit_material.is_lightsource) {
+            dif_color = hit_material.diffuse_color;
+        }
         if (DEBUG_SDF) {
             FragColor = vec4(vec3(dist / 5.0), 1.0);
         } else {
