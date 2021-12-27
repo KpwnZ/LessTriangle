@@ -17,6 +17,7 @@ vec2 torus(vec3, vec3, vec2, int);
 vec2 cone(vec3, vec3, vec2, float, int);
 vec2 capped_cylinder(vec3, vec3, float, float, int);
 vec2 pyramid(vec3, vec3, float, int);
+vec2 round_operation(vec2, float);
 
 // light
 const float daylight_ambient = 0.8;
@@ -38,6 +39,8 @@ vec3 rotate_x(vec3 v, float angle);
 vec3 rotate_y(vec3 v, float angle);
 vec3 rotate_z(vec3 v, float angle);
 vec3 rotate(vec3 v, vec3 n, float angle);
+vec3 twist(vec3, float);
+vec3 bend(vec3, float);
 
 // color
 #define SKY normalize_rgb(vec3(199, 235, 237))
@@ -250,7 +253,8 @@ vec2 scene(vec3 v) {
 
     res = union_sdf(
         res,
-        streetlamp_block(v, vec3(0, 0.1+0.01, 0))
+        //streetlamp_block(v, vec3(0, 0.1+0.01, 0))
+        cube(twist(v, 10.0), vec3(0, 0.15, 0), vec3(0.3, 1, 0.3), 3)
     );
 
     return vec2(res.x, res.y);
