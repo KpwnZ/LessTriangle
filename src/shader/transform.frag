@@ -27,3 +27,18 @@ vec3 rotate(vec3 v, vec3 n, float angle) {
     );
     return rotate_mat * v;
 }
+
+vec3 twist(vec3 p, float k) {
+    float c = cos(k * p.y);
+    float s = sin(k * p.y);
+    mat2 m = mat2(c, -s, s, c);
+    vec2 q = vec2(m * p.xz);
+    return vec3(q.x, p.y, q.y);
+}
+
+vec3 bend(vec3 p, float k) {
+    float c = cos(k * p.x);
+    float s = sin(k * p.x);
+    mat2 m = mat2(c, -s, s, c);
+    return vec3(m * p.xy, p.z);
+}

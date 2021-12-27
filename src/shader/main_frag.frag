@@ -16,7 +16,8 @@ vec2 rounded_cube(vec3 v, vec3 p, vec3 size, float r, int mat_id);
 vec2 torus(vec3, vec3, vec2, int);
 vec2 cone(vec3, vec3, vec2, float, int);
 vec2 capped_cylinder(vec3, vec3, float, float, int);
-vec2 pyramid(vec3, vec3, float, float, int);
+vec2 pyramid(vec3, vec3, float, int);
+vec2 round_operation(vec2, float);
 
 // light
 const float daylight_ambient = 0.8;
@@ -38,6 +39,8 @@ vec3 rotate_x(vec3 v, float angle);
 vec3 rotate_y(vec3 v, float angle);
 vec3 rotate_z(vec3 v, float angle);
 vec3 rotate(vec3 v, vec3 n, float angle);
+vec3 twist(vec3, float);
+vec3 bend(vec3, float);
 
 // color
 #define SKY normalize_rgb(vec3(199, 235, 237))

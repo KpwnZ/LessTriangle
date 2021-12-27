@@ -110,3 +110,7 @@ vec2 pyramid(vec3 v, vec3 p, float h, float va, int mat_id) {
 
     return vec2(sqrt((d2 + q.z * q.z) / m2) * sign(max(q.z, -p.y)), mat_id);
 }
+
+vec2 round_operation(vec2 sdf, float rad) {
+    return vec2(sdf.x - rad, sdf.y);
+}
