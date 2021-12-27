@@ -374,7 +374,7 @@ vec2 scene(vec3 v) {
 
     res = union_sdf(
         res,
-        bench_block(v, vec3(-0.5, 0.1, 0))
+        bench_block(v, vec3(-0.7, 0.1, 0))
     );
 
     return vec2(res.x, res.y);
