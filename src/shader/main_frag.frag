@@ -60,6 +60,7 @@ vec3 symmetric_y(vec3, vec2);
 #define BENCH_MATERIAL  6
 #define BENCH_SURFACE_MATERIAL 7
 #define WATER_MATERIAL  8
+#define BRIDGE_MATERIAL 9
 
 vec3 normalize_rgb(vec3 rgb) {
     return rgb / 255.0;
@@ -91,7 +92,7 @@ struct LightSource {
 
 // add new material here,
 // pass the index to sdf method as material id
-#define MATERIAL_CNT    9
+#define MATERIAL_CNT    10
 Material materials[MATERIAL_CNT] = Material[MATERIAL_CNT](
     // ground id 0
     Material(
@@ -167,7 +168,15 @@ Material materials[MATERIAL_CNT] = Material[MATERIAL_CNT](
         3,
         16,
         false
-    )
+    ),
+    Material(
+        normalize_rgb(vec3(250, 192, 81)),
+        normalize_rgb(vec3(250, 192, 81)),
+        normalize_rgb(vec3(250, 192, 81)),
+        0.9,
+        0.3,
+        32,
+        false)
 );
 
 #define LIGHT_CNT    2
@@ -329,6 +338,26 @@ vec2 bench_block(vec3 v, vec3 p) {
     return bench;
 }
 
+vec2 bridge_block(vec3 v, vec3 p) {
+    // p is the center of block.
+    const float length = 1.0;
+    const float width = 0.6;
+    const float height = 0.08;
+    const float road_height = 0.02;
+    const float road_width = 0.5;
+    const float hole_width = 0.6;
+    const float hole_height = 0.03;
+    const float epsilon = SURFACE * 2;
+
+    vec2 hole = union_sdf(
+        cube(v, vec3(p.x, p.y + 0.5 * (height - road_height), p.z), vec3(length + epsilon, road_height + epsilon, road_width + epsilon), BRIDGE_MATERIAL),
+        cube(v, vec3(p.x, p.y - 0.5 * (height - hole_height), p.z), vec3(hole_width  + epsilon, hole_height  + epsilon, width + epsilon), BRIDGE_MATERIAL)
+    );
+    vec2 bridge = substraction_sdf(hole, cube(v, p, vec3(length, height, width), BRIDGE_MATERIAL));
+
+    return bridge;
+}
+
 /**
  * scene sdf, construct the scene here with geometric primitives
  *
@@ -357,6 +386,11 @@ vec2 scene(vec3 v) {
     res = union_sdf(
         res,
         bench_block(v, vec3(-0.7, 0.1, 0))
+    );
+
+    res = union_sdf(
+        res,
+        bridge_block(v, vec3(0, 0.09, 0))
     );
 
     vec2 box1 = cube(v, vec3(-1.5+0.45, 0.11+0.405/2, 1.5-1.2/2), vec3(0.9, 0.405, 1.2), 0);
