@@ -46,14 +46,16 @@ vec3 bend(vec3, float);
 #define SKY normalize_rgb(vec3(199, 235, 237))
 #define GROUND normalize_rgb(vec3(182, 128, 115))
 #define GRASS normalize_rgb(vec3(193, 222, 129))
+#define BENCH1 normalize_rgb(vec3(150, 135, 65))
 
 // material ID
 #define GROUND_MATERIAL 0
 #define GRASS_MATERIAL  1
-#define TRUNK           2
+#define TRUNK_MATERIAL  2
 #define LAMP_MATERIAL   3
 #define LAMP_BLUB       4
 #define LAMP_MATERIAL2  5
+#define BENCH_MATERIAL  6
 
 vec3 normalize_rgb(vec3 rgb) {
     return rgb / 255.0;
@@ -85,7 +87,7 @@ struct LightSource {
 
 // add new material here,
 // pass the index to sdf method as material id
-#define MATERIAL_CNT    6
+#define MATERIAL_CNT    7
 Material materials[MATERIAL_CNT] = Material[MATERIAL_CNT](
     // ground id 0
     Material(
@@ -106,9 +108,9 @@ Material materials[MATERIAL_CNT] = Material[MATERIAL_CNT](
         3,
         false),
     Material(
-        normalize_rgb(vec3(201, 203, 45)),
-        normalize_rgb(vec3(201, 203, 45)),
-        normalize_rgb(vec3(201, 203, 45)),
+        normalize_rgb(vec3(250, 192, 81)),
+        normalize_rgb(vec3(250, 192, 81)),
+        normalize_rgb(vec3(250, 192, 81)),
         0.0,
         0.3,
         32,
@@ -136,6 +138,14 @@ Material materials[MATERIAL_CNT] = Material[MATERIAL_CNT](
         0.5,
         0.5,
         16,
+        false),
+    Material(
+        BENCH1,
+        BENCH1,
+        BENCH1,
+        0.9,
+        0.3,
+        3,
         false)
 );
 
@@ -228,27 +238,26 @@ vec2 streetlamp_block(vec3 v, vec3 p) {
 }
 
 vec2 bench_block(vec3 v, vec3 p) {
-    vec2 bench = cube(v, vec3(p.x, p.y + 0.2, p.z), vec3(0.2, 0.02, 0.02), 0);
+    vec2 bench = cube(v, vec3(p.x, p.y + 0.05, p.z - 0.01), vec3(0.25, 0.01, 0.01), TRUNK_MATERIAL);
     bench = union_sdf(
         bench,
-        cube(v, vec3(p.x, p.y + 0.2, p.z + 0.025), vec3(0.2, 0.02, 0.02), 0)
+        cube(v, vec3(p.x, p.y + 0.05, p.z + 0.01), vec3(0.25, 0.01, 0.01), TRUNK_MATERIAL)
     );
     bench = union_sdf(
         bench,
-        cube(v, vec3(p.x, p.y + 0.2, p.z + 0.025 * 2), vec3(0.2, 0.02, 0.02), 0)
+        cube(v, vec3(p.x, p.y + 0.05, p.z - 2 * 0.015), vec3(0.25, 0.01, 0.01), TRUNK_MATERIAL)
     );
     bench = union_sdf(
         bench,
-        cube(v, vec3(p.x, p.y + 0.2, p.z + 0.025 * 3), vec3(0.2, 0.02, 0.02), 0)
-    );
-    
+        cube(v, vec3(p.x, p.y + 0.05, p.z + 2 * 0.015), vec3(0.25, 0.01, 0.01), TRUNK_MATERIAL));
+
     bench = union_sdf(
         bench,
-        cube(v, vec3(p.x - 0.1, p.y + 0.1 + 0.05, p.z + 0.05), vec3(0.02, 0.1, 0.1), 0)
+        cube(v, vec3(p.x - 0.1, p.y + 0.025, p.z), vec3(0.02, 0.05, 0.06), BENCH_MATERIAL)
     );
     bench = union_sdf(
         bench,
-        cube(v, vec3(p.x + 0.1, p.y + 0.1 + 0.05, p.z + 0.05), vec3(0.02, 0.1, 0.1), 0)
+        cube(v, vec3(p.x + 0.1, p.y + 0.025, p.z), vec3(0.02, 0.05, 0.06), BENCH_MATERIAL)
     );
 
     return bench;
@@ -295,7 +304,7 @@ vec2 scene(vec3 v) {
 
     res = union_sdf(
         res,
-        bench_block(v, vec3(-0.5, 0, 0))
+        bench_block(v, vec3(-0.5, 0.1+0.01, 0))
     );
 
     return vec2(res.x, res.y);
