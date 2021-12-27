@@ -32,8 +32,8 @@ static std::string read_shader(const std::filesystem::path::value_type *path) {
 
 int main(int argc, char **argv, char **envp) {
     int success;
-    const int width = 1024;
-    const int height = 768;
+    const int width = 1024 / 2;
+    const int height = 768 / 2;
     int framebufferWidth = 0;
     int framebufferHeight = 0;
     int resolution[] = {width, height};

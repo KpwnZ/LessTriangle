@@ -346,14 +346,6 @@ vec2 scene(vec3 v) {
 
     res = union_sdf(
         res,
-        grass_block(v, vec3(1, 0.1, 1), 1, 0.15)
-    );
-    res = union_sdf(
-        res,
-        grass_block(v, vec3(1.25, 0.25, 1.25), 0.5, 0.15)
-    );
-    res = union_sdf(
-        res,
         tree_block(v, vec3(-1.5 + 0.15, 0.375+0.1, 1.5 - 0.15), 0.5)
     );
 
@@ -368,8 +360,9 @@ vec2 scene(vec3 v) {
     );
 
     vec2 box1 = cube(v, vec3(-1.5+0.45, 0.11+0.405/2, 1.5-1.2/2), vec3(0.9, 0.405, 1.2), 0);
+    vec2 box2 = cube(v, vec3(1, 0.1+0.16, 1), vec3(1, 0.32, 1), 0);
 
-    if(box1.x <= res.x) {
+    if(box1.x <= res.x && box1.x <= box2.x) {
         for (int i = 0; i < 3; ++i) {
             for (int j = 0; j < 3 - i + 1; ++j) {
                 int h = (3 - i + 1 - j);
@@ -379,6 +372,13 @@ vec2 scene(vec3 v) {
                     grass_block(v, vec3(-1.5 + (2 * i + 1) * 0.15, 0.1, 1.5 - (2 * j + 1) * 0.15), 0.3, h * 0.125));
             }
         }
+    }else if(box2.x <= res.x && box2.x <= box1.x) {
+        res = union_sdf(
+            res,
+            grass_block(v, vec3(1, 0.1, 1), 1, 0.15));
+        res = union_sdf(
+            res,
+            grass_block(v, vec3(1.25, 0.25, 1.25), 0.5, 0.15));
     }
 
     return vec2(res.x, res.y);
