@@ -41,6 +41,7 @@ vec3 rotate_z(vec3 v, float angle);
 vec3 rotate(vec3 v, vec3 n, float angle);
 vec3 twist(vec3, float);
 vec3 bend(vec3, float);
+vec3 symmetric_y(vec3, vec2);
 
 // color
 #define SKY normalize_rgb(vec3(199, 235, 237))
@@ -246,27 +247,63 @@ vec2 streetlamp_block(vec3 v, vec3 p) {
     return lamp;
 }
 
+/*
+    vec3 p is the center of the bottom.
+    The const data could be changed to create defferent sizes of benches. 
+*/
 vec2 bench_block(vec3 v, vec3 p) {
-    vec2 bench = cube(v, vec3(p.x, p.y + 0.05, p.z - 0.015), vec3(0.35, 0.02, 0.02), TRUNK_MATERIAL);
-    bench = union_sdf(
-        bench,
-        cube(v, vec3(p.x, p.y + 0.05, p.z + 0.015), vec3(0.35, 0.02, 0.02), TRUNK_MATERIAL)
+    const float length = 0.3;
+    const float height = 0.06;
+    const float bottom_length = 0.2;
+    const float unit_width = 0.02;
+    const float stick_width = 0.02;
+    const float gap = 0.005;
+
+    vec2 bench = cube(
+        v, vec3(p.x, p.y + height - stick_width / 2, 
+        p.z - 1.5 * (gap + unit_width)), 
+        vec3(length, stick_width, unit_width), 
+        BENCH_SURFACE_MATERIAL
     );
-    bench = union_sdf(
-        bench,
-        cube(v, vec3(p.x, p.y + 0.05, p.z - 0.045), vec3(0.35, 0.02, 0.02), TRUNK_MATERIAL)
-    );
-    bench = union_sdf(
-        bench,
-        cube(v, vec3(p.x, p.y + 0.05, p.z + 0.045), vec3(0.35, 0.02, 0.02), TRUNK_MATERIAL));
 
     bench = union_sdf(
         bench,
-        cube(v, vec3(p.x - 0.1, p.y + 0.025, p.z), vec3(0.02, 0.05, 0.1), BENCH_MATERIAL)
+        cube(
+            v, vec3(p.x, p.y + height - stick_width / 2, 
+            p.z - 0.5 * (gap + unit_width)), 
+            vec3(length, stick_width, unit_width), 
+            BENCH_SURFACE_MATERIAL)
     );
     bench = union_sdf(
         bench,
-        cube(v, vec3(p.x + 0.1, p.y + 0.025, p.z), vec3(0.02, 0.05, 0.1), BENCH_MATERIAL)
+        cube(
+            v, vec3(p.x, p.y + height - stick_width / 2, 
+            p.z + 0.5 * (gap + unit_width)), 
+            vec3(length, stick_width, unit_width), 
+            BENCH_SURFACE_MATERIAL)
+    );
+    bench = union_sdf(
+        bench,
+        cube(
+            v, vec3(p.x, p.y + height - stick_width / 2, 
+            p.z + 1.5 * (gap + unit_width)), 
+            vec3(length, stick_width, unit_width), 
+            BENCH_SURFACE_MATERIAL)
+    );
+    
+    bench = union_sdf(
+        bench,
+        cube(
+            v, vec3(p.x - 0.5 * (bottom_length - unit_width), p.y + (height - stick_width) / 2, p.z), 
+            vec3(unit_width, height - stick_width, 4 * unit_width + 3 * gap), 
+            BENCH_MATERIAL)
+    );
+    bench = union_sdf(
+        bench,
+        cube(
+            v, vec3(p.x + 0.5 * (bottom_length - unit_width), p.y + (height - stick_width) / 2, p.z), 
+            vec3(unit_width, height - stick_width, 4 * unit_width + 3 * gap), 
+            BENCH_MATERIAL)
     );
 
     return bench;
@@ -315,7 +352,12 @@ vec2 scene(vec3 v) {
 
     res = union_sdf(
         res,
-        bench_block(v, vec3(-0.5, 0.1+0.01, 0))
+        bench_block(v, vec3(-0.5, 0.1, 0))
+    );
+
+    res = union_sdf(
+        res,
+        cube(symmetric_y(v, vec2(0, 0)), vec3(0.3), vec3(0.1), BENCH_SURFACE_MATERIAL)
     );
 
     return vec2(res.x, res.y);
