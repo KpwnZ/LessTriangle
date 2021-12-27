@@ -247,11 +247,11 @@ vec2 streetlamp_block(vec3 v, vec3 p) {
 }
 
 vec2 bench_block(vec3 v, vec3 p) {
-    const float length = 0.2;
-    const float height = 0.08;
-    const float bottom_length = 0.16;
+    const float length = 0.3;
+    const float height = 0.06;
+    const float bottom_length = 0.2;
     const float unit_width = 0.02;
-    const float stick_width = 0.01;
+    const float stick_width = 0.02;
     const float gap = 0.005;
 
     vec2 bench = cube(
