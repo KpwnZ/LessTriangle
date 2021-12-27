@@ -16,7 +16,7 @@ vec2 intersection_sdf(vec2 sdf1, vec2 sdf2) {
 
 vec2 substraction_sdf(vec2 sdf1, vec2 sdf2) {
     // Substract sdf1 from sdf2.
-    return vec2(max(-sdf1.x, sdf2.x), sdf2.y);
+    return vec2(max(-sdf1.x + 0.0002, sdf2.x), sdf2.y);
 }
 
 vec2 smooth_union_sdf(vec2 sdf1, vec2 sdf2, float k) {

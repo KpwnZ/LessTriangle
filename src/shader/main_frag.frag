@@ -347,11 +347,10 @@ vec2 bridge_block(vec3 v, vec3 p) {
     const float road_width = 0.5;
     const float hole_width = 0.6;
     const float hole_height = 0.03;
-    const float epsilon = SURFACE * 2;
 
     vec2 hole = union_sdf(
-        cube(v, vec3(p.x, p.y + 0.5 * (height - road_height), p.z), vec3(length + epsilon, road_height + epsilon, road_width + epsilon), BRIDGE_MATERIAL),
-        cube(v, vec3(p.x, p.y - 0.5 * (height - hole_height), p.z), vec3(hole_width  + epsilon, hole_height  + epsilon, width + epsilon), BRIDGE_MATERIAL)
+        cube(v, vec3(p.x, p.y + 0.5 * (height - road_height), p.z), vec3(length, road_height, road_width), BRIDGE_MATERIAL),
+        cube(v, vec3(p.x, p.y - 0.5 * (height - hole_height), p.z), vec3(hole_width, hole_height, width), BRIDGE_MATERIAL)
     );
     vec2 bridge = substraction_sdf(hole, cube(v, p, vec3(length, height, width), BRIDGE_MATERIAL));
 
