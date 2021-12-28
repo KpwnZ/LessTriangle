@@ -180,16 +180,21 @@ Material materials[MATERIAL_CNT] = Material[MATERIAL_CNT](
         false)
 );
 
-#define LIGHT_CNT    1
+#define LIGHT_CNT    3
 LightSource light_sources[LIGHT_CNT] = LightSource[LIGHT_CNT](
-    // LightSource(
-    //     vec3(-2, 1, -2),
-    //     vec3(1, 1, 1),
-    //     1.3),
+    LightSource(
+        vec3(-2, 1, -2),
+        vec3(1, 1, 1),
+        1.3),
     LightSource(
         vec3(-1, 0.11 + 0.529, 0),
         vec3(0.9191, 0.8109, 0.0659),
-        10)
+        5),
+    LightSource(
+        vec3(1, 0.11 + 0.529, 0),
+        vec3(0.9191, 0.8109, 0.0659),
+        5
+    )
 );
 
 vec2 grass_block(vec3 v, vec3 p, float extent, float height) {
@@ -250,7 +255,7 @@ vec2 tree_block(vec3 v, vec3 p, float height, vec2 hit_data) {
 }
 
 // light source position = p.y + 0.529
-vec2 streetlamp_block(vec3 v, vec3 p, vec2 hit_data) {
+vec2 streetlamp_block(vec3 v, vec3 p, vec2 hit_data, bool trace_shadow) {
     vec2 hit_test = cube(v, vec3(p.x, p.y + (0.002 + 0.001 + 0.5 + 0.002 + 0.05 + 0.002 + 0.05) / 2, p.z), vec3(0.09, 0.002 + 0.001 + 0.5 + 0.002 + 0.05 + 0.002 + 0.05, 0.09), 0);
     if(hit_test.x > hit_data.x) return hit_data;
 
@@ -261,16 +266,20 @@ vec2 streetlamp_block(vec3 v, vec3 p, vec2 hit_data) {
     );
     base = union_sdf(
         base,
-        cube(v, vec3(p.x, p.y+0.002+0.001+0.5, p.z), vec3(0.06, 0.002, 0.06), LAMP_MATERIAL)
+        cube(v, vec3(p.x, p.y+0.002+0.001+0.5, p.z), vec3(0.01, 0.002, 0.01), LAMP_MATERIAL)
     );
     vec2 cylinder = capped_cylinder(v, vec3(p.x, p.y+0.002+0.25, p.z), 0.006, 0.5, LAMP_MATERIAL);
-    vec2 light_block = cube(v, vec3(p.x, p.y+0.002+0.5+0.002+0.025, p.z), vec3(0.05, 0.05, 0.05), LAMP_BLUB);
+
+    if(!trace_shadow) vec2 light_block = cube(v, vec3(p.x, p.y+0.002+0.5+0.002+0.025, p.z), vec3(0.05, 0.05, 0.05), LAMP_BLUB);
     vec2 pillar = cube(
         symmetric_y(v, p.xz), 
         vec3(0.027, p.y+0.002+0.5+0.002+0.025, 0.027), 
         vec3(0.004, 0.05, 0.004), LAMP_MATERIAL);
     base = union_sdf(base, pillar);
-    base = union_sdf(base, light_block);
+    if (!trace_shadow) {
+        vec2 light_block = cube(v, vec3(p.x, p.y + 0.002 + 0.5 + 0.002 + 0.025, p.z), vec3(0.05, 0.05, 0.05), LAMP_BLUB);
+        base = union_sdf(base, light_block);
+    }
     base = union_sdf(
         base,
         cube(v, vec3(p.x, p.y+0.002+0.001+0.5+0.002+0.05+0.001, p.z), vec3(0.09, 0.002, 0.09), LAMP_MATERIAL)
@@ -376,7 +385,9 @@ vec2 bridge_block(vec3 v, vec3 p) {
  *
  * @return Distance from the ray to the scene
  */
-vec2 scene(vec3 v) {
+vec2 scene(vec4 iv) {
+    vec3 v = iv.xyz;
+    bool trace_shadow = iv.w == 1;
     vec2 ground = grass_block(v, vec3(0, -0.2, 0), 3, 0.3);
     vec2 riverbed = cube(v, vec3(0, -0.1 + 0.12, 0), vec3(1, 0.2, 5), 0);
     vec2 river = cube(v, vec3(0, -0.05, 0), vec3(1, 0.2, 3), WATER_MATERIAL);
@@ -396,12 +407,12 @@ vec2 scene(vec3 v) {
 
     res = union_sdf(
         res,
-        streetlamp_block(v, vec3(-1, 0.1+0.01, 0), res)
+        streetlamp_block(v, vec3(-1, 0.1+0.01, 0), res, trace_shadow)
     );
 
     res = union_sdf(
         res,
-        streetlamp_block(v, vec3(1, 0.1 + 0.01, 0), res)
+        streetlamp_block(v, vec3(1, 0.1 + 0.01, 0), res, trace_shadow)
     );
 
     res = union_sdf(
@@ -447,9 +458,9 @@ vec2 scene(vec3 v) {
 vec3 normal(vec3 p) {
     const float eps = 0.00001;
     return normalize(vec3(
-        scene(vec3(p.x + eps, p.y, p.z)).x - scene(vec3(p.x - eps, p.y, p.z)).x,
-        scene(vec3(p.x, p.y + eps, p.z)).x - scene(vec3(p.x, p.y - eps, p.z)).x,
-        scene(vec3(p.x, p.y, p.z + eps)).x - scene(vec3(p.x, p.y, p.z - eps)).x));
+        scene(vec4(p.x + eps, p.y, p.z, 0)).x - scene(vec4(p.x - eps, p.y, p.z, 0)).x,
+        scene(vec4(p.x, p.y + eps, p.z, 0)).x - scene(vec4(p.x, p.y - eps, p.z, 0)).x,
+        scene(vec4(p.x, p.y, p.z + eps, 0)).x - scene(vec4(p.x, p.y, p.z - eps, 0)).x));
 }
 
 /**
@@ -466,7 +477,7 @@ vec2 ray_march(vec3 start, vec3 dir) {
     vec2 res;
     for (int i = 0; i < MAX_STEP; ++i) {
         vec3 p = start + dir * depth;
-        res = scene(p);
+        res = scene(vec4(p, 0));
         float dist = res.x;
         depth += dist;
         if (depth > MAX_DISTANCE || dist < SURFACE) {
@@ -483,15 +494,14 @@ vec2 ray_march(vec3 start, vec3 dir) {
 float soft_shadow(in vec3 ro, in vec3 rd, float mint, float maxt, float k) {
     float res = 1.0;
     float ph = 1e20;
+    float h = 0;
+    Material mat;
     for (float t = mint; t < maxt;) {
-        vec2 hit = scene(ro + rd * t);
-        float h = hit.x;
-        Material mat = materials[int(hit.y)];
-        if (h < SURFACE)
-            return 0.0;
-        if (mat.is_lightsource) {
-            return res;
-        }
+        vec2 hit = scene(vec4(ro + rd * t, 1));
+        h = hit.x;
+        mat = materials[int(hit.y)];
+        if (h < 0.001)
+            break;
         float h2 = pow(h, 2);
         float y = h2/ (2.0 * ph);
         float d = sqrt(h2 - y * y);
@@ -499,6 +509,7 @@ float soft_shadow(in vec3 ro, in vec3 rd, float mint, float maxt, float k) {
         ph = h;
         t += h;
     }
+    if(h < 0.001 && !mat.is_lightsource) return 0;
     return res;
 }
 
@@ -524,7 +535,7 @@ void main() {
     vec2 ratio = vec2(resolution_.x / resolution_.y, 1.0);
     vec2 uv = ratio * (gl_FragCoord.xy / resolution_.xy - 0.5);
     vec3 ro = vec3(4 * cos(u_time), 2, 4 * sin(u_time));
-    // vec3 ro = vec3(0, 1, 1);
+    // vec3 ro = vec3(3, 3, -3);
     mat3 cm = camera_mat(ro, vec3(0, 1, 0), vec3(0, 0, 0));
     vec3 rd = cm * normalize(vec3(uv.x, uv.y, 1.));
 
