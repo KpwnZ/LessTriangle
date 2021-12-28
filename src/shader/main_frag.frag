@@ -246,8 +246,11 @@ vec2 tree_block(vec3 v, vec3 p, float height) {
 }
 
 // light source position = p.y + 0.529
-vec2 streetlamp_block(vec3 v, vec3 p) {
-    vec2 base = cube(v, vec3(p.x, p.y+0.001, p.z), vec3(0.06, 0.002, 0.06), LAMP_MATERIAL);
+vec2 streetlamp_block(vec3 v, vec3 p, vec2 hit_data) {
+    vec2 hit_test = cube(v, vec3(p.x, p.y + (0.002 + 0.001 + 0.5 + 0.002 + 0.05 + 0.002 + 0.05) / 2, p.z), vec3(0.09, 0.002 + 0.001 + 0.5 + 0.002 + 0.05 + 0.002 + 0.05, 0.09), 0);
+    if(hit_test.x > hit_data.x) return hit_data;
+
+    vec2 base = cube(v, vec3(p.x, p.y + 0.001, p.z), vec3(0.06, 0.002, 0.06), LAMP_MATERIAL);
     base = union_sdf(
         base,
         cube(v, vec3(p.x, p.y+0.002+0.015, p.z), vec3(0.03, 0.12, 0.03), LAMP_MATERIAL)
@@ -280,13 +283,18 @@ vec2 streetlamp_block(vec3 v, vec3 p) {
     vec3 p is the center of the bottom.
     The const data could be changed to create defferent sizes of benches. 
 */
-vec2 bench_block(vec3 v, vec3 p) {
+vec2 bench_block(vec3 v, vec3 p, vec2 hit_data) {
     const float length = 0.3;
     const float height = 0.06;
     const float bottom_length = 0.2;
     const float unit_width = 0.02;
     const float stick_width = 0.02;
     const float gap = 0.005;
+
+    vec2 hit_test = cube(v, vec3(p.x, p.y + height / 2, 0), vec3(length, height, stick_width * 4 + 3 * gap), 0);
+    if(hit_test.x > hit_data.x) {
+        return hit_data;
+    }
 
     vec2 bench = cube(
         v, vec3(p.x, p.y + height - stick_width / 2, 
@@ -379,12 +387,12 @@ vec2 scene(vec3 v) {
 
     res = union_sdf(
         res,
-        streetlamp_block(v, vec3(-1, 0.1+0.01, 0))
+        streetlamp_block(v, vec3(-1, 0.1+0.01, 0), res)
     );
 
     res = union_sdf(
         res,
-        bench_block(v, vec3(-0.7, 0.1, 0))
+        bench_block(v, vec3(-0.7, 0.1, 0), res)
     );
 
     res = union_sdf(
