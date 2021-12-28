@@ -13,12 +13,18 @@
 
 /**
  * Read shader source file to std::string.
- * 
+ *
  * @param[in] path. The path of the shader source code file.
- * 
+ *
  * @return The shader source code.
  */
-static std::string read_shader(const std::filesystem::path::value_type *path) {
+
+#ifdef _WIN32
+static std::string read_shader(const char *path)
+#else
+static std::string read_shader(const std::filesystem::path::value_type *path)
+#endif
+{
     std::ifstream ifs;
     ifs.exceptions(ifs.exceptions() | std::ios_base::badbit | std::ios_base::failbit);
     ifs.open(path);
@@ -56,7 +62,7 @@ int main(int argc, char **argv, char **envp) {
     window = glfwCreateWindow(width, height, "LessTriangle", NULL, NULL);
 
     glfwGetFramebufferSize(window, &resolution[0], &resolution[1]);
-    
+
     if (window == NULL) {
         fprintf(stderr, "failed to create window\n");
         glfwTerminate();
@@ -70,17 +76,17 @@ int main(int argc, char **argv, char **envp) {
         fprintf(stderr, "failed to init glew.\n");
         return -1;
     }
-    
+
     glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
 
     const float vertices[] = {
-        1.0f, 1.0f, 0.0f,   // top right
-        1.0f, -1.0f, 0.0f,  // bottom right
-        -1.0f, 1.0f, 0.0f,  // top left
+        1.0f, 1.0f, 0.0f,  // top right
+        1.0f, -1.0f, 0.0f, // bottom right
+        -1.0f, 1.0f, 0.0f, // top left
 
-        -1.0f, -1.0f, 0.0f,  // bottom left
-        -1.0f, 1.0f, 0.0f,   // top left
-        1.0f, -1.0f, 0.0f,   // bottom right
+        -1.0f, -1.0f, 0.0f, // bottom left
+        -1.0f, 1.0f, 0.0f,  // top left
+        1.0f, -1.0f, 0.0f,  // bottom right
     };
 
     // unsigned int fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
@@ -152,7 +158,7 @@ int main(int argc, char **argv, char **envp) {
         "../src/shader/transform.frag",
     };
 
-    for(auto filename : shaders) {
+    for (auto filename : shaders) {
         unsigned int shader = glCreateShader(GL_FRAGMENT_SHADER);
         std::string shader_str = read_shader(filename);
         const char *shader_src = shader_str.c_str();
