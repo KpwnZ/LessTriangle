@@ -191,6 +191,7 @@ int main(int argc, char **argv, char **envp) {
     // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     glUniform2iv(glGetUniformLocation(shader_program, "resolution"), 1, resolution);
     do {
+        glUniform1f(glGetUniformLocation(shader_program, "u_time"), float(clock()) / 1000.0);
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
         glDrawArrays(GL_TRIANGLES, 0, 6);
