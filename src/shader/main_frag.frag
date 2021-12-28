@@ -418,6 +418,66 @@ vec2 scene(vec3 v) {
 }
 
 /**
+ * Get the bounding box hit by the ray
+ * We use the mat_id to determine the index of bounding box here
+ * 
+ * @param[in] Vector Ray vector
+ */
+vec2 box(vec3 v) {
+    vec2 box1 = cube(v, vec3(-1.5 + 0.45, 0.11 + 0.405 / 2, 1.5 - 1.2 / 2), vec3(0.9, 0.405, 1.2), 1);
+    vec2 box2 = cube(v, vec3(1, 0.1 + 0.16, 1), vec3(1, 0.32, 1), 2);
+    return union_sdf(box1, box2);
+}
+
+/**
+ * Get the bounding box hit by the ray
+ * We use the mat_id to determine the index of bounding box here
+ * 
+ * @param[in] Vector Ray vector
+ */
+ vec2 box_scene(vec3 v, int box_id) {
+    vec2 res = vec2(0x7f7f7f7f, -1);
+    if(box_id == 1) {
+        for (int i = 0; i < 3; ++i) {
+            for (int j = 0; j < 3 - i + 1; ++j) {
+               int h = (3 - i + 1 - j);
+               if (h == 4) h = 3;
+               res = union_sdf(
+                   res,
+                   grass_block(v, vec3(-1.5 + (2 * i + 1) * 0.15, 0.1, 1.5 - (2 * j + 1) * 0.15), 0.3, h * 0.125));
+            }
+        }
+    }else if(box_id == 2) {
+        res = union_sdf(
+            res,
+            grass_block(v, vec3(1, 0.1, 1), 1, 0.15));
+        res = union_sdf(
+            res,
+            grass_block(v, vec3(1.25, 0.25, 1.25), 0.5, 0.15));
+    }else {
+        vec2 ground = grass_block(v, vec3(0, -0.2, 0), 3, 0.3);
+        vec2 riverbed = cube(v, vec3(0, -0.1 + 0.12, 0), vec3(1, 0.2, 5), 0);
+        vec2 river = cube(v, vec3(0, -0.05, 0), vec3(1, 0.2, 3), WATER_MATERIAL);
+        ground = substraction_sdf(riverbed, ground);
+        ground = union_sdf(ground, river);
+        vec2 res = ground;
+        res = union_sdf(
+            res,
+            tree_block(v, vec3(-1.5 + 0.15, 0.375 + 0.1, 1.5 - 0.15), 0.5));
+        res = union_sdf(
+            res,
+            streetlamp_block(v, vec3(-1, 0.1 + 0.01, 0)));
+        res = union_sdf(
+            res,
+            bench_block(v, vec3(-0.7, 0.1, 0)));
+        res = union_sdf(
+            res,
+            bridge_block(v, vec3(0, 0.09, 0)));
+    }
+    return res;
+ }
+
+/**
  * Normal of a given point in the scene
  * 
  * @param[in] Point  The point to compute the normal for
@@ -442,15 +502,31 @@ vec3 normal(vec3 p) {
 vec2 ray_march(vec3 start, vec3 dir) {
     float depth = 0.0;
     vec2 res;
+    vec3 p;
     for (int i = 0; i < MAX_STEP; ++i) {
-        vec3 p = start + dir * depth;
-        res = scene(p);
+        p = start + dir * depth;
+        res = box(p);
         float dist = res.x;
         depth += dist;
         if (depth > MAX_DISTANCE || dist < SURFACE) {
             // depth > MAX_DISTANCE means the ray is too far
             // dist < SURFACE means the ray is very close to the surface,
             // which can be returned.
+            break;
+        }
+    }
+    if (depth >= MAX_DISTANCE - 0.001) {
+        res.y = 0                              
+        depth = 0;
+    }
+
+    int box_id = int(res.y);
+    for (int i = 0; i < MAX_STEP; ++i) {
+        p = start + dir * depth;
+        res = box_scene(p, box_id);
+        float dist = res.x;
+        depth += dist;
+        if (depth > MAX_DISTANCE || dist < SURFACE) {
             break;
         }
     }
