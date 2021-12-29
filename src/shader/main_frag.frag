@@ -198,6 +198,7 @@ LightSource light_sources[LIGHT_CNT] = LightSource[LIGHT_CNT](
 );
 
 vec2 grass_block(vec3 v, vec3 p, float extent, float height) {
+    // p is the center of the bottom.
     vec2 block = union_sdf(
         cube(v, vec3(p.x, p.y + height / 2, p.z), vec3(extent, height, extent), 0),
         cube(v, vec3(p.x, p.y + height + 0.01 / 2, p.z), vec3(extent, 0.01, extent), 1));
@@ -415,11 +416,15 @@ vec2 hill2(vec3 v, vec2 hit_data) {
  * @return Distance from the ray to the scene
  */
 vec2 scene(vec4 iv) {
+    float land_adjust = 0.04;
+
     vec3 v = iv.xyz;
     bool trace_shadow = iv.w == 1;
-    vec2 ground = grass_block(v, vec3(0, -0.2, 0), 3, 0.3);
-    vec2 riverbed = cube(v, vec3(0, -0.1 + 0.12, 0), vec3(1, 0.2, 5), 0);
-    vec2 river = cube(v, vec3(0, -0.05, 0), vec3(1, 0.2, 3), WATER_MATERIAL);
+
+    vec2 ground = grass_block(v, vec3(0, -0.2 - land_adjust, 0), 3, 0.3 + land_adjust);
+
+    vec2 riverbed = cube(v, vec3(0, -0.1 + 0.12, 0), vec3(1, 0.2 + land_adjust * 2, 5), 0);
+    vec2 river = cube(v, vec3(0, -0.05 - land_adjust, 0), vec3(1, 0.2, 3), WATER_MATERIAL);
     ground = substraction_sdf(riverbed, ground);
     ground = union_sdf(ground, river);
     vec2 res = ground;
@@ -451,7 +456,7 @@ vec2 scene(vec4 iv) {
 
     res = union_sdf(
         res,
-        bridge_block(v, vec3(0, 0.09, 0))
+        bridge_block(v, vec3(0, 0.09 - land_adjust, -0.4))
     );
 
     res = hill1(v, res);
