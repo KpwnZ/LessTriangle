@@ -183,9 +183,9 @@ Material materials[MATERIAL_CNT] = Material[MATERIAL_CNT](
 #define LIGHT_CNT    3
 LightSource light_sources[LIGHT_CNT] = LightSource[LIGHT_CNT](
     LightSource(
-        vec3(-2, 1, -2),
+        vec3(5, 6, 5),
         vec3(1, 1, 1),
-        1.3),
+        30),
     LightSource(
         vec3(-1, 0.11 + 0.529, 0),
         vec3(0.9191, 0.8109, 0.0659),
@@ -378,6 +378,35 @@ vec2 bridge_block(vec3 v, vec3 p) {
     return bridge;
 }
 
+vec2 hill1(vec3 v, vec2 hit_data) {
+    vec2 hit_test = cube(v, vec3(-1.5 + 0.45, 0.11 + 0.405 / 2, 1.5 - 1.2 / 2), vec3(0.9, 0.405, 1.2), 0);
+    if(hit_test.x > hit_data.x) return hit_data;
+    vec2 res = hit_data;
+    for (int i = 0; i < 3; ++i) {
+        for (int j = 0; j < 3 - i + 1; ++j) {
+            int h = (3 - i + 1 - j);
+            if (h == 4) h = 3;
+            res = union_sdf(
+                res,
+                grass_block(v, vec3(-1.5 + (2 * i + 1) * 0.15, 0.1, 1.5 - (2 * j + 1) * 0.15), 0.3, h * 0.125));
+        }
+    }
+    return res;
+}
+
+vec2 hill2(vec3 v, vec2 hit_data) {
+    vec2 hit_test = cube(v, vec3(1, 0.1 + 0.16, 1), vec3(1, 0.32, 1), 0);
+    if(hit_test.x > hit_data.x) return hit_data;
+    vec2 res = hit_data;
+    res = union_sdf(
+        res,
+        grass_block(v, vec3(1, 0.1, 1), 1, 0.15));
+    res = union_sdf(
+        res,
+        grass_block(v, vec3(1.25, 0.25, 1.25), 0.5, 0.15));
+    return res;
+}
+
 /**
  * scene sdf, construct the scene here with geometric primitives
  *
@@ -425,27 +454,8 @@ vec2 scene(vec4 iv) {
         bridge_block(v, vec3(0, 0.09, 0))
     );
 
-    vec2 box1 = cube(v, vec3(-1.5+0.45, 0.11+0.405/2, 1.5-1.2/2), vec3(0.9, 0.405, 1.2), 0);
-    vec2 box2 = cube(v, vec3(1, 0.1+0.16, 1), vec3(1, 0.32, 1), 0);
-
-    if(box1.x <= res.x && box1.x <= box2.x) {
-        for (int i = 0; i < 3; ++i) {
-            for (int j = 0; j < 3 - i + 1; ++j) {
-                int h = (3 - i + 1 - j);
-                if (h == 4) h = 3;
-                res = union_sdf(
-                    res,
-                    grass_block(v, vec3(-1.5 + (2 * i + 1) * 0.15, 0.1, 1.5 - (2 * j + 1) * 0.15), 0.3, h * 0.125));
-            }
-        }
-    }else if(box2.x <= res.x && box2.x <= box1.x) {
-        res = union_sdf(
-            res,
-            grass_block(v, vec3(1, 0.1, 1), 1, 0.15));
-        res = union_sdf(
-            res,
-            grass_block(v, vec3(1.25, 0.25, 1.25), 0.5, 0.15));
-    }
+    res = hill1(v, res);
+    res = hill2(v, res);
 
     return vec2(res.x, res.y);
 }
@@ -534,7 +544,7 @@ void main() {
     vec2 resolution_ = resolution;
     vec2 ratio = vec2(resolution_.x / resolution_.y, 1.0);
     vec2 uv = ratio * (gl_FragCoord.xy / resolution_.xy - 0.5);
-    vec3 ro = vec3(4 * cos(u_time), 2, 4 * sin(u_time));
+    vec3 ro = vec3(3 * cos(u_time), 2, 3 * sin(u_time));
     // vec3 ro = vec3(3, 3, -3);
     mat3 cm = camera_mat(ro, vec3(0, 1, 0), vec3(0, 0, 0));
     vec3 rd = cm * normalize(vec3(uv.x, uv.y, 1.));
