@@ -52,3 +52,11 @@ vec3 bend(vec3 p, float k) {
 vec3 symmetric_y(vec3 p, vec2 axis) {
     return vec3(abs(p.x - axis.x), p.y, abs(p.z - axis.y));
 }
+
+vec3 centrosymmetric_y(vec3 p, vec2 axis) {
+    if (p.x - axis.x > 0) {
+        return vec3(p.x - axis.x, p.y, p.z - axis.y);
+    } else {
+        return vec3(axis.x - p.x, p.y, axis.y - p.z);
+    }
+}
