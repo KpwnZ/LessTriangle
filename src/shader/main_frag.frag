@@ -208,8 +208,8 @@ vec2 grass_block(vec3 v, vec3 p, float extent, float height) {
 
 vec2 tree_block(vec3 v, vec3 p, float height, vec2 hit_data) {
     float n1 = 0.25;
-    float d1 = rand(p.xy) / 10.0;
-    vec2 hit_test = cube(v, vec3(p.x, p.y + (height + n1) / 2, p.z), vec3(n1/2+(n1+d1)/2+2*(height / 3 + d1), height+n1, n1/2+(n1+d1)/2+2*( p.z - height / 3 - d1)), 0);
+    float d1 = abs(rand(p.xy)) / 10.0;
+    vec2 hit_test = cube(v, vec3(p.x, p.y + (height + n1) / 2, p.z), vec3(n1 / 2 + (n1 + d1) / 2 + 2 * (height / 3 + d1), height + n1, n1 / 2 + (n1 + d1) / 2 + 2 * (height / 3 - d1)), 0);
     if(hit_test.x > hit_data.x) return hit_data;
     // trunk
     vec2 main_trunk = cube(v, vec3(p.x, p.y + height / 2, p.z), vec3(0.08, height, 0.08), 0);
@@ -475,6 +475,11 @@ vec2 scene(vec4 iv) {
 
     res = union_sdf(
         res,
+        tree_block(v, vec3(-1, 0.11+0.15, -0.65), 0.5, res)
+    );
+
+    res = union_sdf(
+        res,
         streetlamp_block(v, vec3(-1, 0.1+0.01, 0), res, trace_shadow)
     );
 
@@ -486,6 +491,11 @@ vec2 scene(vec4 iv) {
     res = union_sdf(
         res,
         bench_block(v, vec3(-0.7, 0.1, 0), res)
+    );
+
+    res = union_sdf(
+        res,
+        bench_block(v, vec3(0.9, 0.1, -0.7), res)
     );
 
     res = union_sdf(
