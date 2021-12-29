@@ -192,7 +192,7 @@ LightSource light_sources[LIGHT_CNT] = LightSource[LIGHT_CNT](
         vec3(0.9191, 0.8109, 0.0659),
         5),
     LightSource(
-        vec3(1, 0.11 + 0.529, 0),
+        vec3(0.8, 0.11 + 0.529, -0.1),
         vec3(0.9191, 0.8109, 0.0659),
         5
     )
@@ -480,7 +480,7 @@ vec2 scene(vec4 iv) {
 
     res = union_sdf(
         res,
-        streetlamp_block(v, vec3(1, 0.1 + 0.01, 0), res, trace_shadow)
+        streetlamp_block(v, vec3(0.8, 0.1 + 0.01, -0.1), res, trace_shadow)
     );
 
     res = union_sdf(
