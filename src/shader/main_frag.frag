@@ -43,6 +43,7 @@ vec3 rotate(vec3 v, vec3 n, float angle);
 vec3 twist(vec3, float);
 vec3 bend(vec3, float);
 vec3 symmetric_y(vec3, vec2);
+vec3 centrosymmetric_y(vec3, vec2);
 
 // color
 #define SKY normalize_rgb(vec3(199, 235, 237))
@@ -198,6 +199,7 @@ LightSource light_sources[LIGHT_CNT] = LightSource[LIGHT_CNT](
 );
 
 vec2 grass_block(vec3 v, vec3 p, float extent, float height) {
+    // p is the center of the bottom.
     vec2 block = union_sdf(
         cube(v, vec3(p.x, p.y + height / 2, p.z), vec3(extent, height, extent), 0),
         cube(v, vec3(p.x, p.y + height + 0.01 / 2, p.z), vec3(extent, 0.01, extent), 1));
@@ -405,6 +407,40 @@ vec2 hill2(vec3 v, vec2 hit_data) {
     return res;
 }
 
+vec2 road_block(vec3 v, vec3 p) {
+    // p is the centroid of the whole road block.
+    // The depth of road should be equal to land_adjust in function scene(vec4).
+    const float depth = 0.04;
+
+    // The width should match the width of bridge.
+    const float width = 0.35;
+    const float river_width = 1.0;
+
+    vec2 road = cube(
+        centrosymmetric_y(
+            centrosymmetric_y(v, p.xz), 
+            vec2(0.5 * river_width + 1.5 * width, width)
+        ),
+        vec3(0.5 * width, p.y, width),
+        vec3(2 * width, depth, width),
+        0
+    );
+    road = union_sdf(
+        road,
+        cube(
+            centrosymmetric_y(
+                centrosymmetric_y(v, p.xz), 
+                vec2(0.5 * river_width + 1.5 * width, width)
+            ),
+            vec3(0, p.y, 0),
+            vec3(width, depth, 3 * width),
+            0
+        )
+    );
+
+    return road;
+}
+
 /**
  * scene sdf, construct the scene here with geometric primitives
  *
@@ -413,11 +449,16 @@ vec2 hill2(vec3 v, vec2 hit_data) {
  * @return Distance from the ray to the scene
  */
 vec2 scene(vec4 iv) {
+    float land_adjust = 0.04;
+    // This the depth of the road.
+
     vec3 v = iv.xyz;
     bool trace_shadow = iv.w == 1;
-    vec2 ground = grass_block(v, vec3(0, -0.2, 0), 3, 0.3);
-    vec2 riverbed = cube(v, vec3(0, -0.1 + 0.12, 0), vec3(1, 0.2, 5), 0);
-    vec2 river = cube(v, vec3(0, -0.05, 0), vec3(1, 0.2, 3), WATER_MATERIAL);
+
+    vec2 ground = grass_block(v, vec3(0, -0.2 - land_adjust, 0), 3, 0.3 + land_adjust);
+
+    vec2 riverbed = cube(v, vec3(0, -0.1 + 0.12, 0), vec3(1, 0.2 + land_adjust * 2, 5), 0);
+    vec2 river = cube(v, vec3(0, -0.05 - land_adjust, 0), vec3(1, 0.2, 3), WATER_MATERIAL);
     ground = substraction_sdf(riverbed, ground);
     ground = union_sdf(ground, river);
     vec2 res = ground;
@@ -449,7 +490,12 @@ vec2 scene(vec4 iv) {
 
     res = union_sdf(
         res,
-        bridge_block(v, vec3(0, 0.09, 0))
+        bridge_block(v, vec3(0, 0.09 - land_adjust, -0.4))
+    );
+
+    res = substraction_sdf(
+        road_block(v, vec3(0, 0.11 - 0.02, -0.4)),
+        res
     );
 
     res = hill1(v, res);

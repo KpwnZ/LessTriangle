@@ -10,6 +10,7 @@
 #include <iostream>
 #include <iterator>
 #include <vector>
+#include <ctime>
 
 /**
  * Read shader source file to std::string.
