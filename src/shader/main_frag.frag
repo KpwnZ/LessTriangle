@@ -304,7 +304,7 @@ vec2 bench_block(vec3 v, vec3 p, vec2 hit_data) {
     const float stick_width = 0.02;
     const float gap = 0.005;
 
-    vec2 hit_test = cube(v, vec3(p.x, p.y + height / 2, 0), vec3(length, height, stick_width * 4 + 3 * gap), 0);
+    vec2 hit_test = cube(v, vec3(p.x, p.y + height / 2, p.z), vec3(length, height, stick_width * 4 + 3 * gap), 0);
     if(hit_test.x > hit_data.x) {
         return hit_data;
     }
