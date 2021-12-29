@@ -206,7 +206,8 @@ vec2 grass_block(vec3 v, vec3 p, float extent, float height) {
 
 vec2 tree_block(vec3 v, vec3 p, float height, vec2 hit_data) {
     float n1 = 0.25;
-    vec2 hit_test = cube(v, vec3(p.x, p.y + (height + n1) / 2, p.z), vec3(n1/2+(n1+0.03)/2+2*(height / 3 + 0.03), height+n1, n1/2+(n1+0.03)/2+2*( p.z - height / 3 - 0.08)), 0);
+    float d1 = rand(p.xy) / 10.0;
+    vec2 hit_test = cube(v, vec3(p.x, p.y + (height + n1) / 2, p.z), vec3(n1/2+(n1+d1)/2+2*(height / 3 + d1), height+n1, n1/2+(n1+d1)/2+2*( p.z - height / 3 - d1)), 0);
     if(hit_test.x > hit_data.x) return hit_data;
     // trunk
     vec2 main_trunk = cube(v, vec3(p.x, p.y + height / 2, p.z), vec3(0.08, height, 0.08), 0);
@@ -230,24 +231,21 @@ vec2 tree_block(vec3 v, vec3 p, float height, vec2 hit_data) {
     // leaves
     // float n1 = 0.25;
     vec2 top_leaves = cube(v, vec3(p.x, p.y + height + n1 / 2, p.z), vec3(n1, n1, n1), 1);
-    n1 -= 0.06;
     top_leaves = union_sdf(
         top_leaves,
-        cube(v, vec3(p.x + height / 3 + 0.03, p.y + height / 3 * 2 + 0.16, p.z), vec3(n1, n1, n1), 1)
+        cube(v, vec3(p.x + height / 3 + d1, p.y + height / 3 * 2 + 0.16, p.z), vec3(n1, n1, n1), 1)
     );
     top_leaves = union_sdf(
         top_leaves,
-        cube(v, vec3(p.x - height / 3 - 0.03, p.y + height / 3 * 2 + 0.16, p.z), vec3(n1+0.03, n1, n1+0.03), 1)
+        cube(v, vec3(p.x - height / 3 - d1, p.y + height / 3 * 2 + 0.16, p.z), vec3(n1 + d1, n1, n1 + d1), 1)
     );
-    n1 += 0.05;
     top_leaves = union_sdf(
         top_leaves,
-        cube(v, vec3(p.x, p.y + height / 3 * 2 + 0.12, p.z - height / 3 - 0.08), vec3(n1+0.03, n1, n1+0.03), 1)
+        cube(v, vec3(p.x, p.y + height / 3 * 2 + d1, p.z - height / 3 - d1), vec3(n1 + d1, n1, n1 + d1), 1)
     );
-    n1 += 0.03;
     top_leaves = union_sdf(
         top_leaves,
-        cube(v, vec3(p.x, p.y + height / 3 * 2 + 0.10, p.z + height / 3 + 0.06), vec3(n1, n1, n1), 1)
+        cube(v, vec3(p.x, p.y + height / 3 * 2 + 0.10, p.z + height / 3 + 2 * d1), vec3(n1, n1, n1), 1)
     );
 
     main_trunk = union_sdf(main_trunk, top_leaves);
@@ -544,8 +542,8 @@ void main() {
     vec2 resolution_ = resolution;
     vec2 ratio = vec2(resolution_.x / resolution_.y, 1.0);
     vec2 uv = ratio * (gl_FragCoord.xy / resolution_.xy - 0.5);
-    vec3 ro = vec3(3 * cos(u_time), 2, 3 * sin(u_time));
-    // vec3 ro = vec3(3, 3, -3);
+    // vec3 ro = vec3(3 * cos(u_time), 2, 3 * sin(u_time));
+    vec3 ro = vec3(3, 3, -3);
     mat3 cm = camera_mat(ro, vec3(0, 1, 0), vec3(0, 0, 0));
     vec3 rd = cm * normalize(vec3(uv.x, uv.y, 1.));
 
