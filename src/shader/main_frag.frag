@@ -362,10 +362,10 @@ vec2 bench_block(vec3 v, vec3 p, vec2 hit_data) {
 vec2 bridge_block(vec3 v, vec3 p) {
     // p is the center of block.
     const float length = 1.0;
-    const float width = 0.6;
+    const float width = 0.35;
     const float height = 0.08;
     const float road_height = 0.02;
-    const float road_width = 0.5;
+    const float road_width = 0.3;
     const float hole_width = 0.6;
     const float hole_height = 0.03;
 
