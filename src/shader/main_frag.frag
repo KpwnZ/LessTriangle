@@ -48,7 +48,7 @@ vec3 centrosymmetric_y(vec3, vec2);
 // color
 #define SKY normalize_rgb(vec3(199, 235, 237))
 #define GROUND normalize_rgb(vec3(182, 128, 115))
-#define GRASS normalize_rgb(vec3(193, 222, 129))
+#define GRASS normalize_rgb(vec3(221, 234, 143))
 #define BENCH1 normalize_rgb(vec3(150, 135, 65))
 #define WATER normalize_rgb(vec3(96, 202, 211))
 
@@ -63,6 +63,7 @@ vec3 centrosymmetric_y(vec3, vec2);
 #define BENCH_SURFACE_MATERIAL 7
 #define WATER_MATERIAL  8
 #define BRIDGE_MATERIAL 9
+#define LEAVE_MATERIAL  10
 
 vec3 normalize_rgb(vec3 rgb) {
     return rgb / 255.0;
@@ -94,7 +95,7 @@ struct LightSource {
 
 // add new material here,
 // pass the index to sdf method as material id
-#define MATERIAL_CNT    10
+#define MATERIAL_CNT    11
 Material materials[MATERIAL_CNT] = Material[MATERIAL_CNT](
     // ground id 0
     Material(
@@ -142,7 +143,7 @@ Material materials[MATERIAL_CNT] = Material[MATERIAL_CNT](
         normalize_rgb(vec3(132, 126, 118)),
         normalize_rgb(vec3(132, 126, 118)),
         normalize_rgb(vec3(132, 126, 118)),
-        0.9 ,
+        0.9,
         0.5,
         16,
         false),
@@ -169,8 +170,7 @@ Material materials[MATERIAL_CNT] = Material[MATERIAL_CNT](
         0.3,
         3,
         16,
-        false
-    ),
+        false),
     Material(
         normalize_rgb(vec3(250, 192, 81)),
         normalize_rgb(vec3(250, 192, 81)),
@@ -178,6 +178,14 @@ Material materials[MATERIAL_CNT] = Material[MATERIAL_CNT](
         0.9,
         0.3,
         32,
+        false),
+    Material(
+        normalize_rgb(vec3(173, 215, 125)),
+        normalize_rgb(vec3(173, 215, 125)),
+        normalize_rgb(vec3(173, 215, 125)),
+        0.9,
+        0.3,
+        3,
         false)
 );
 
@@ -232,22 +240,22 @@ vec2 tree_block(vec3 v, vec3 p, float height, vec2 hit_data) {
 
     // leaves
     // float n1 = 0.25;
-    vec2 top_leaves = cube(v, vec3(p.x, p.y + height + n1 / 2, p.z), vec3(n1, n1, n1), 1);
+    vec2 top_leaves = cube(v, vec3(p.x, p.y + height + n1 / 2, p.z), vec3(n1, n1, n1), LEAVE_MATERIAL);
     top_leaves = union_sdf(
         top_leaves,
-        cube(v, vec3(p.x + height / 3 + d1, p.y + height / 3 * 2 + 0.16, p.z), vec3(n1, n1, n1), 1)
+        cube(v, vec3(p.x + height / 3 + d1, p.y + height / 3 * 2 + 0.16, p.z), vec3(n1, n1, n1), LEAVE_MATERIAL)
     );
     top_leaves = union_sdf(
         top_leaves,
-        cube(v, vec3(p.x - height / 3 - d1, p.y + height / 3 * 2 + 0.16, p.z), vec3(n1 + d1, n1, n1 + d1), 1)
+        cube(v, vec3(p.x - height / 3 - d1, p.y + height / 3 * 2 + 0.16, p.z), vec3(n1 + d1, n1, n1 + d1), LEAVE_MATERIAL)
     );
     top_leaves = union_sdf(
         top_leaves,
-        cube(v, vec3(p.x, p.y + height / 3 * 2 + d1, p.z - height / 3 - d1), vec3(n1 + d1, n1, n1 + d1), 1)
+        cube(v, vec3(p.x, p.y + height / 3 * 2 + d1, p.z - height / 3 - d1), vec3(n1 + d1, n1, n1 + d1), LEAVE_MATERIAL)
     );
     top_leaves = union_sdf(
         top_leaves,
-        cube(v, vec3(p.x, p.y + height / 3 * 2 + 0.10, p.z + height / 3 + 2 * d1), vec3(n1, n1, n1), 1)
+        cube(v, vec3(p.x, p.y + height / 3 * 2 + 0.10, p.z + height / 3 + 2 * d1), vec3(n1, n1, n1), LEAVE_MATERIAL)
     );
 
     main_trunk = union_sdf(main_trunk, top_leaves);
@@ -441,6 +449,39 @@ vec2 road_block(vec3 v, vec3 p) {
     return road;
 }
 
+vec2 floral_block(vec3 v, vec3 p) {
+
+    float n = rand(p.xz) / 30;
+    float k = rand(p.xy);
+    float t = rand(p.zy);
+    float w = t / 50;
+    vec2 main_branch = cube(v, vec3(p.x, p.y + n / 2, p.z), vec3(w, n, w), LEAVE_MATERIAL);
+    if(k > 0.5) {
+        main_branch = union_sdf(
+            main_branch,
+            cube(v, vec3(p.x, p.y + n + 0.01, p.z), vec3(w, w, w), 0)
+        );
+    }
+    return main_branch;
+}
+
+vec2 plants_block(vec3 v, vec3 p, vec2 extent, vec2 hit_data) {
+    vec2 hit_test = cube(v, vec3(p.x, p.y+0.1, p.z), vec3(extent.x, 0.05, extent.y), 0);
+    if(hit_test.x > hit_data.x) return hit_data;
+    for(float i = 0; i < extent.x; i += 0.3) {
+        for(float j = 0; j < extent.y; j += 0.3) {
+            float t = rand(vec2(j, i));
+            if(t > 0.5) {
+                hit_data = union_sdf(
+                    hit_data,
+                    floral_block(v, vec3(p.x + i, p.y, p.z + j))
+                );
+            }
+        }
+    }
+    return hit_data;
+}
+
 /**
  * scene sdf, construct the scene here with geometric primitives
  *
@@ -475,7 +516,7 @@ vec2 scene(vec4 iv) {
 
     res = union_sdf(
         res,
-        tree_block(v, vec3(-1, 0.11+0.15, -0.65), 0.5, res)
+        tree_block(v, vec3(-0.6, 0.11, -1.2), 0.5, res)
     );
 
     res = union_sdf(
@@ -506,6 +547,11 @@ vec2 scene(vec4 iv) {
     res = substraction_sdf(
         road_block(v, vec3(0, 0.11 - 0.02, -0.4)),
         res
+    );
+
+    res = union_sdf(
+        res,
+        plants_block(v, vec3(1, 0.11, -1), vec2(1, 1), res)
     );
 
     res = hill1(v, res);
@@ -599,7 +645,7 @@ void main() {
     vec2 ratio = vec2(resolution_.x / resolution_.y, 1.0);
     vec2 uv = ratio * (gl_FragCoord.xy / resolution_.xy - 0.5);
     // vec3 ro = vec3(3 * cos(u_time), 2, 3 * sin(u_time));
-    vec3 ro = vec3(3, 3, -3);
+    vec3 ro = vec3(2, 1, -2);
     mat3 cm = camera_mat(ro, vec3(0, 1, 0), vec3(0, 0, 0));
     vec3 rd = cm * normalize(vec3(uv.x, uv.y, 1.));
 
