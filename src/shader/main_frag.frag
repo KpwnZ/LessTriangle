@@ -206,6 +206,32 @@ LightSource light_sources[LIGHT_CNT] = LightSource[LIGHT_CNT](
     )
 );
 
+vec2 floral_block(vec3 v, vec3 p) {
+
+    float n = rand(p.xz) / 10;
+    float k = rand(p.xy) / 10;
+    float t = rand(p.zy) / 10;
+    float w = t / 5;
+    vec2 main_branch = cube(v, vec3(p.x, p.y + n / 2, p.z), vec3(w, n, w), LEAVE_MATERIAL);
+    main_branch = union_sdf(
+        main_branch,
+        cube(v, vec3(p.x - k, p.y + t / 2, p.z), vec3(w, t, w), LEAVE_MATERIAL)
+    );
+    main_branch = union_sdf(
+        main_branch,
+        cube(v, vec3(p.x + rand(vec2(k, t)) / 5, p.y + k / 2, p.z), vec3(w, k, w), LEAVE_MATERIAL)
+    );
+    main_branch = union_sdf(
+        main_branch,
+        cube(v, vec3(p.x, p.y + t / 2, p.z + rand(vec2(k, t)) / 5), vec3(w, t, w), LEAVE_MATERIAL)
+    );
+    main_branch = union_sdf(
+        main_branch,
+        cube(v, vec3(p.x, p.y + t / 2, p.z - rand(vec2(t, k)) / 5), vec3(w, t, w), LEAVE_MATERIAL)
+    );
+    return main_branch;
+}
+
 vec2 grass_block(vec3 v, vec3 p, float extent, float height) {
     // p is the center of the bottom.
     vec2 block = union_sdf(
@@ -221,6 +247,10 @@ vec2 tree_block(vec3 v, vec3 p, float height, vec2 hit_data) {
     if(hit_test.x > hit_data.x) return hit_data;
     // trunk
     vec2 main_trunk = cube(v, vec3(p.x, p.y + height / 2, p.z), vec3(0.08, height, 0.08), 0);
+    main_trunk = union_sdf(
+        main_trunk,
+        floral_block(v, vec3(p.x, p.y, p.z))
+    );
     main_trunk = union_sdf(
         main_trunk,
         cube(v, vec3(p.x + height / 6, p.y + height / 3 * 2, p.z), vec3(height / 3, 0.08, 0.08), 0)
@@ -365,32 +395,6 @@ vec2 bench_block(vec3 v, vec3 p, vec2 hit_data) {
     );
 
     return bench;
-}
-
-vec2 floral_block(vec3 v, vec3 p) {
-
-    float n = rand(p.xz) / 10;
-    float k = rand(p.xy) / 10;
-    float t = rand(p.zy) / 10;
-    float w = t / 5;
-    vec2 main_branch = cube(v, vec3(p.x, p.y + n / 2, p.z), vec3(w, n, w), LEAVE_MATERIAL);
-    main_branch = union_sdf(
-        main_branch,
-        cube(v, vec3(p.x - k, p.y + t / 2, p.z), vec3(w, t, w), LEAVE_MATERIAL)
-    );
-    main_branch = union_sdf(
-        main_branch,
-        cube(v, vec3(p.x + rand(vec2(k, t)) / 5, p.y + k / 2, p.z), vec3(w, k, w), LEAVE_MATERIAL)
-    );
-    main_branch = union_sdf(
-        main_branch,
-        cube(v, vec3(p.x, p.y + t / 2, p.z + rand(vec2(k, t)) / 5), vec3(w, t, w), LEAVE_MATERIAL)
-    );
-    main_branch = union_sdf(
-        main_branch,
-        cube(v, vec3(p.x, p.y + t / 2, p.z - rand(vec2(t, k)) / 5), vec3(w, t, w), LEAVE_MATERIAL)
-    );
-    return main_branch;
 }
 
 vec2 bridge_block(vec3 v, vec3 p) {
