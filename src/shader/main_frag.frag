@@ -458,7 +458,7 @@ vec2 hill2(vec3 v, vec2 hit_data) {
 vec2 hill3(vec3 v, vec2 hit_data) {
     hit_data = union_sdf(
         hit_data, 
-        grass_block(v, vec3(1, 0.1, -1), 1, 0.15)
+        grass_block(v, vec3(1.2, 0.1, -1.2), 0.6, 0.15)
     );
     return hit_data;
 }
@@ -560,6 +560,10 @@ vec2 scene(vec4 iv) {
         res,
         streetlamp_block(v, vec3(-1, 0.1+0.01, 0), res, trace_shadow)
     );
+    res = union_sdf(
+        res, 
+        floral_block(v, vec3(-1, 0.1+0.01, 0.05))
+    );
 
     res = union_sdf(
         res,
@@ -574,6 +578,11 @@ vec2 scene(vec4 iv) {
     res = union_sdf(
         res,
         bench_block(v, vec3(0.9, 0.1, -0.7), res)
+    );
+
+    res = union_sdf(
+        res,
+        floral_block(v, vec3(0.9, 0.1 + 0.01, -0.05))
     );
 
     res = union_sdf(
