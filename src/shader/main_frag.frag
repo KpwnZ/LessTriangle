@@ -249,10 +249,6 @@ vec2 tree_block(vec3 v, vec3 p, float height, vec2 hit_data) {
     vec2 main_trunk = cube(v, vec3(p.x, p.y + height / 2, p.z), vec3(0.08, height, 0.08), 0);
     main_trunk = union_sdf(
         main_trunk,
-        floral_block(v, vec3(p.x, p.y, p.z))
-    );
-    main_trunk = union_sdf(
-        main_trunk,
         cube(v, vec3(p.x + height / 6, p.y + height / 3 * 2, p.z), vec3(height / 3, 0.08, 0.08), 0)
     );
     main_trunk = union_sdf(
