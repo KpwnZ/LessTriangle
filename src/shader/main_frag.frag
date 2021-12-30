@@ -6,6 +6,7 @@
 #define SURFACE 0.0001
 #define DEBUG_SDF false
 
+uniform bool day_time = false;
 out vec4 FragColor;  // gl style...
 uniform ivec2 resolution;
 uniform float u_time; 
@@ -47,6 +48,7 @@ vec3 centrosymmetric_y(vec3, vec2);
 
 // color
 #define SKY normalize_rgb(vec3(199, 235, 237))
+#define NIGHT_SKY normalize_rgb(vec3(16, 15, 43))
 #define GROUND normalize_rgb(vec3(182, 128, 115))
 #define GRASS normalize_rgb(vec3(221, 234, 143))
 #define BENCH1 normalize_rgb(vec3(150, 135, 65))
@@ -206,11 +208,11 @@ LightSource light_sources[LIGHT_CNT] = LightSource[LIGHT_CNT](
     LightSource(
         vec3(-1, 0.11 + 0.529, 0),
         vec3(0.9191, 0.8109, 0.0659),
-        5),
+        day_time ? 5 : 9),
     LightSource(
         vec3(0.6, 0.1 + 0.529, -0.1),
         vec3(0.9191, 0.8109, 0.0659),
-        5
+        day_time ? 5 : 9
     )
 );
 
@@ -563,10 +565,10 @@ vec2 scene(vec4 iv) {
         tree_block(v, vec3(-0.6, 0.11, -1.2), 0.5, res)
     );
 
-    // res = union_sdf(
-    //     res,
-    //     tree_block(v, vec3(1.2, 0.25, -1), 0.5, res)
-    // );
+    res = union_sdf(
+        res,
+        tree_block(v, vec3(1.2, 0.25, -1), 0.5, res)
+    );
 
     res = union_sdf(
         res,
@@ -618,6 +620,13 @@ vec2 scene(vec4 iv) {
             cube(v, vec3(1.35, 0.15, -0.2), vec3(0.1, 0.1, 0.1), LEAVE_MATERIAL),
             cube(v, vec3(1.35, 0.125, -0.275), vec3(0.05, 0.05, 0.05), LEAVE_MATERIAL)
         )
+    );
+
+    res = union_sdf(
+        res,
+        union_sdf(
+            cube(v, vec3(-1.35, 0.15, -0.2), vec3(0.1, 0.1, 0.1), LEAVE_MATERIAL),
+            cube(v, vec3(-1.35, 0.125, -0.275), vec3(0.05, 0.05, 0.05), LEAVE_MATERIAL))
     );
 
     res = union_sdf(
@@ -744,7 +753,10 @@ void main() {
     int mat_id = int(res.y);
     Material hit_material = materials[int(res.y)];
     if (dist >= MAX_DISTANCE - 0.001) {
-        FragColor = vec4(SKY, 1);
+        if(day_time) 
+            FragColor = vec4(SKY, 1);
+        else
+            FragColor = vec4(NIGHT_SKY, 1);
     } else {
         vec3 p = ro + rd * dist;
         // vec3 light_position = vec3(0, 3, -3);
@@ -783,7 +795,7 @@ void main() {
                 ls.light_color, hit_material.spec_color, hit_material.k_s, hit_material.shininess) * shadow;
         }
 
-        dif_color += ambient_light(hit_material.ambient_color, vec3(1, 1, 1), daylight_ambient);
+        dif_color += ambient_light(hit_material.ambient_color, vec3(1, 1, 1), day_time ? daylight_ambient : nightlight_ambient);
         if(hit_material.is_lightsource) {
             dif_color = hit_material.diffuse_color;
         }

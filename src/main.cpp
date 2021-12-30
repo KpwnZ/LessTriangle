@@ -11,6 +11,7 @@
 #include <iterator>
 #include <vector>
 #include <ctime>
+#include <exception>
 
 /**
  * Read shader source file to std::string.
@@ -28,7 +29,12 @@ static std::string read_shader(const std::filesystem::path::value_type *path)
 {
     std::ifstream ifs;
     ifs.exceptions(ifs.exceptions() | std::ios_base::badbit | std::ios_base::failbit);
-    ifs.open(path);
+    try {
+        ifs.open(path);
+    } catch (std::exception &e) {
+        fprintf(stderr, "[-] failed to open file\n");
+        exit(1);
+    }
     ifs.ignore(std::numeric_limits<std::streamsize>::max());
 
     ifs.clear();
@@ -38,14 +44,28 @@ static std::string read_shader(const std::filesystem::path::value_type *path)
 }
 
 int main(int argc, char **argv, char **envp) {
+    bool single_frame = false;
+    bool night = true;
     int success;
-    const int width = 1024 / 4;
-    const int height = 768 / 4;
+    const int width = 1024 / 8;
+    const int height = 768 / 8;
     int framebufferWidth = 0;
     int framebufferHeight = 0;
     int resolution[] = {width, height};
+
+    for(int i = 0; i < argc; ++i) {
+        if(strcmp(argv[i], "-s") == 0) {
+            single_frame = true;
+        }else if(strcmp(argv[i], "-n") == 0) {
+            night = true;
+        }
+    }
+
+    printf("[*] render mode: %s\n", single_frame ? "single frame" : "dynamic");
+    printf("[*] render %s\n", night ? "night" : "daytime");
+
     if (!glfwInit()) {
-        fprintf(stderr, "failed to init\n");
+        fprintf(stderr, "[-] failed to init\n");
     }
 
     glfwWindowHint(GLFW_SAMPLES, 4);
@@ -65,7 +85,7 @@ int main(int argc, char **argv, char **envp) {
     glfwGetFramebufferSize(window, &resolution[0], &resolution[1]);
 
     if (window == NULL) {
-        fprintf(stderr, "failed to create window\n");
+        fprintf(stderr, "[-] failed to create window\n");
         glfwTerminate();
         return -1;
     }
@@ -74,7 +94,7 @@ int main(int argc, char **argv, char **envp) {
     glewExperimental = GL_TRUE;
 
     if (glewInit() != GLEW_OK) {
-        fprintf(stderr, "failed to init glew.\n");
+        fprintf(stderr, "[-] failed to init glew.\n");
         return -1;
     }
 
@@ -147,8 +167,10 @@ int main(int argc, char **argv, char **envp) {
     glEnableVertexAttribArray(0);
     // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     glUniform2iv(glGetUniformLocation(shader_program, "resolution"), 1, resolution);
+    
     do {
         glUniform1f(glGetUniformLocation(shader_program, "u_time"), float(clock()) / CLOCKS_PER_SEC);
+        glUniform1i(glGetUniformLocation(shader_program, "day_time"), !night);
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
         glDrawArrays(GL_TRIANGLES, 0, 6);
@@ -156,7 +178,8 @@ int main(int argc, char **argv, char **envp) {
 
         glfwSwapBuffers(window);
         glfwPollEvents();
-    } while (glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS && glfwWindowShouldClose(window) == 0);
+        
+    } while (glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS && glfwWindowShouldClose(window) == 0)
 
     return 0;
 }
