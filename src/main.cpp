@@ -90,40 +90,13 @@ int main(int argc, char **argv, char **envp) {
         1.0f, -1.0f, 0.0f,  // bottom right
     };
 
-    // unsigned int fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
-    // std::string frag_shader_str = read_shader("../src/shader/main_frag.frag");
-
     unsigned int vertex_shader = glCreateShader(GL_VERTEX_SHADER);
     std::string vert_shader_str = read_shader("../src/shader/main_vert.vert");
 
-    // unsigned int sphere_shader = glCreateShader(GL_FRAGMENT_SHADER);
-    // std::string shpere_shader_str = read_shader("../src/shader/sphere.frag");
-
-    // unsigned int lighting_shader = glCreateShader(GL_FRAGMENT_SHADER);
-    // std::string lighting_shader_str = read_shader("../src/shader/lighting_model.frag");
-
     const char *vert_shader_src = vert_shader_str.c_str();
-    // const char *frag_shader_src = frag_shader_str.c_str();
-    // const char *sphere_shader_src = shpere_shader_str.c_str();
-    // const char *lighting_shader_src = lighting_shader_str.c_str();
 
     glShaderSource(vertex_shader, 1, &vert_shader_src, NULL);
-    // glShaderSource(fragment_shader, 1, &frag_shader_src, NULL);
-    // glShaderSource(sphere_shader, 1, &sphere_shader_src, NULL);
-    // glShaderSource(lighting_shader, 1, &lighting_shader_src, NULL);
-
     glCompileShader(vertex_shader);
-    // glCompileShader(fragment_shader);
-    // glCompileShader(sphere_shader);
-    // glCompileShader(lighting_shader);
-
-    // glGetShaderiv(fragment_shader, GL_COMPILE_STATUS, &success);
-    // if (!success) {
-    //     char info_log[512];
-    //     glGetShaderInfoLog(fragment_shader, 512, NULL, info_log);
-    //     fprintf(stderr, "[-] fragment shader compile error: %s\n", info_log);
-    // }
-
     glGetShaderiv(vertex_shader, GL_COMPILE_STATUS, &success);
     if (!success) {
         char info_log[512];
@@ -131,25 +104,8 @@ int main(int argc, char **argv, char **envp) {
         fprintf(stderr, "[-] vertex shader compile error: %s\n", info_log);
     }
 
-    // glGetShaderiv(sphere_shader, GL_COMPILE_STATUS, &success);
-    // if (!success) {
-    //     char info_log[512];
-    //     glGetShaderInfoLog(sphere_shader, 512, NULL, info_log);
-    //     fprintf(stderr, "[-] sphere shader compile error: %s\n", info_log);
-    // }
-
-    // glGetShaderiv(lighting_shader, GL_COMPILE_STATUS, &success);
-    // if (!success) {
-    //     char info_log[512];
-    //     glGetShaderInfoLog(lighting_shader, 512, NULL, info_log);
-    //     fprintf(stderr, "[-] lighting shader compile error: %s\n", info_log);
-    // }
-
     unsigned int shader_program = glCreateProgram();
     glAttachShader(shader_program, vertex_shader);
-    // glAttachShader(shader_program, sphere_shader);
-    // glAttachShader(shader_program, fragment_shader);
-    // glAttachShader(shader_program, lighting_shader);
 
     std::vector<const char *> shaders = {
         "../src/shader/main_frag.frag",
