@@ -209,26 +209,29 @@ LightSource light_sources[LIGHT_CNT] = LightSource[LIGHT_CNT](
 vec2 floral_block(vec3 v, vec3 p) {
 
     float n = rand(p.xz) / 10;
-    float k = rand(p.xy) / 10;
+    float k = rand(p.xy);
     float t = rand(p.zy) / 10;
     float w = t / 5;
     vec2 main_branch = cube(v, vec3(p.x, p.y + n / 2, p.z), vec3(w, n, w), LEAVE_MATERIAL);
-    main_branch = union_sdf(
-        main_branch,
-        cube(v, vec3(p.x - k, p.y + t / 2, p.z), vec3(w, t, w), LEAVE_MATERIAL)
-    );
-    main_branch = union_sdf(
-        main_branch,
-        cube(v, vec3(p.x + rand(vec2(k, t)) / 5, p.y + k / 2, p.z), vec3(w, k, w), LEAVE_MATERIAL)
-    );
-    main_branch = union_sdf(
-        main_branch,
-        cube(v, vec3(p.x, p.y + t / 2, p.z + rand(vec2(k, t)) / 5), vec3(w, t, w), LEAVE_MATERIAL)
-    );
-    main_branch = union_sdf(
-        main_branch,
-        cube(v, vec3(p.x, p.y + t / 2, p.z - rand(vec2(t, k)) / 5), vec3(w, t, w), LEAVE_MATERIAL)
-    );
+    if(k > 0.5) {
+        main_branch = union_sdf(
+            main_branch,
+            cube(v, vec3(p.x + w, p.y + n * 2 / 3, p.z), vec3(w, t, w), LEAVE_MATERIAL)
+        );
+        main_branch = union_sdf(
+            main_branch,
+            cube(v, vec3(p.x - w, p.y + n * 3 / 4, p.z), vec3(w, t, w), LEAVE_MATERIAL)
+        );
+    }else {
+        main_branch = union_sdf(
+            main_branch,
+            cube(v, vec3(p.x, p.y + n * 2 / 3, p.z + w), vec3(w, t, w), LEAVE_MATERIAL)
+        );
+        main_branch = union_sdf(
+            main_branch,
+            cube(v, vec3(p.x - w, p.y + n * 3 / 4, p.z - w), vec3(w, t, w), LEAVE_MATERIAL)
+        );
+    }
     return main_branch;
 }
 
