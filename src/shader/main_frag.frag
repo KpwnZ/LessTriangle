@@ -441,6 +441,14 @@ vec2 hill2(vec3 v, vec2 hit_data) {
     res = union_sdf(
         res,
         grass_block(v, vec3(1.25, 0.25, 1.25), 0.5, 0.15));
+    res = union_sdf(
+        res,
+        floral_block(v, vec3(1.25, 0.4, 1.25))
+    );
+    res = union_sdf(
+        res,
+        floral_block(v, vec3(1, 0.25, 1.2))
+    );
     return res;
 }
 
