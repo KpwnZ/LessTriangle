@@ -64,6 +64,7 @@ vec3 centrosymmetric_y(vec3, vec2);
 #define WATER_MATERIAL  8
 #define BRIDGE_MATERIAL 9
 #define LEAVE_MATERIAL  10
+#define STONE_MATERIAL  11
 
 vec3 normalize_rgb(vec3 rgb) {
     return rgb / 255.0;
@@ -95,7 +96,7 @@ struct LightSource {
 
 // add new material here,
 // pass the index to sdf method as material id
-#define MATERIAL_CNT    11
+#define MATERIAL_CNT    12
 Material materials[MATERIAL_CNT] = Material[MATERIAL_CNT](
     // ground id 0
     Material(
@@ -186,7 +187,16 @@ Material materials[MATERIAL_CNT] = Material[MATERIAL_CNT](
         0.9,
         0.3,
         3,
-        false)
+        false),
+    Material(
+        normalize_rgb(vec3(199, 153, 126)),
+        normalize_rgb(vec3(199, 153, 126)),
+        normalize_rgb(vec3(199, 153, 126)),
+        0.5, 
+        0.5,
+        3,
+        false
+    )
 );
 
 #define LIGHT_CNT    3
@@ -581,6 +591,11 @@ vec2 scene(vec4 iv) {
 
     res = union_sdf(
         res,
+        floral_block(v, vec3(-0.7, 0.1, -0.7))
+    );
+
+    res = union_sdf(
+        res,
         bench_block(v, vec3(0.9, 0.1, -0.7), res)
     );
 
@@ -599,10 +614,21 @@ vec2 scene(vec4 iv) {
         res
     );
 
-    // res = union_sdf(
-    //     res,
-    //     plants_block(v, vec3(1, 0.11, -1), vec2(1, 1), res)
-    // );
+    res = union_sdf(
+        res,
+        union_sdf(
+            cube(v, vec3(1.35, 0.15, -0.2), vec3(0.1, 0.1, 0.1), LEAVE_MATERIAL),
+            cube(v, vec3(1.35, 0.125, -0.275), vec3(0.05, 0.05, 0.05), LEAVE_MATERIAL)
+        )
+    );
+
+    res = union_sdf(
+        res,
+        union_sdf(
+            cube(v, vec3(1.35, 0.25, -1.25), vec3(0.1, 0.1, 0.1), LEAVE_MATERIAL),
+            cube(v, vec3(1.325, 0.25, -1.25), vec3(0.05, 0.05, 0.05), LEAVE_MATERIAL)
+        )
+    );
 
     res = hill1(v, res);
     res = hill2(v, res);
