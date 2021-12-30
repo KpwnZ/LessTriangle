@@ -173,11 +173,11 @@ Material materials[MATERIAL_CNT] = Material[MATERIAL_CNT](
         16,
         false),
     Material(
-        normalize_rgb(vec3(250, 192, 81)),
-        normalize_rgb(vec3(250, 192, 81)),
-        normalize_rgb(vec3(250, 192, 81)),
+        normalize_rgb(vec3(202, 162, 113)),
+        normalize_rgb(vec3(202, 162, 113)),
+        normalize_rgb(vec3(202, 162, 113)),
+        0.6,
         0.9,
-        0.3,
         32,
         false),
     Material(
@@ -192,12 +192,10 @@ Material materials[MATERIAL_CNT] = Material[MATERIAL_CNT](
         normalize_rgb(vec3(199, 153, 126)),
         normalize_rgb(vec3(199, 153, 126)),
         normalize_rgb(vec3(199, 153, 126)),
-        0.5, 
+        0.5,
         0.5,
         3,
-        false
-    )
-);
+        false));
 
 #define LIGHT_CNT    3
 LightSource light_sources[LIGHT_CNT] = LightSource[LIGHT_CNT](
@@ -210,7 +208,7 @@ LightSource light_sources[LIGHT_CNT] = LightSource[LIGHT_CNT](
         vec3(0.9191, 0.8109, 0.0659),
         5),
     LightSource(
-        vec3(0.8, 0.11 + 0.529, -0.1),
+        vec3(0.6, 0.1 + 0.529, -0.1),
         vec3(0.9191, 0.8109, 0.0659),
         5
     )
@@ -565,10 +563,10 @@ vec2 scene(vec4 iv) {
         tree_block(v, vec3(-0.6, 0.11, -1.2), 0.5, res)
     );
 
-    res = union_sdf(
-        res,
-        tree_block(v, vec3(1.2, 0.25, -1), 0.5, res)
-    );
+    // res = union_sdf(
+    //     res,
+    //     tree_block(v, vec3(1.2, 0.25, -1), 0.5, res)
+    // );
 
     res = union_sdf(
         res,
@@ -581,7 +579,7 @@ vec2 scene(vec4 iv) {
 
     res = union_sdf(
         res,
-        streetlamp_block(v, vec3(0.8, 0.1 + 0.01, -0.1), res, trace_shadow)
+        streetlamp_block(v, vec3(0.6, 0.1 + 0.01, -0.1), res, trace_shadow)
     );
 
     res = union_sdf(
