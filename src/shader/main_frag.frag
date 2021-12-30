@@ -200,7 +200,7 @@ Material materials[MATERIAL_CNT] = Material[MATERIAL_CNT](
 #define LIGHT_CNT    3
 LightSource light_sources[LIGHT_CNT] = LightSource[LIGHT_CNT](
     LightSource(
-        vec3(5, 6, 5),
+        vec3(-1, 6, -5),
         vec3(1, 1, 1),
         30),
     LightSource(
