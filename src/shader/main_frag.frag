@@ -415,6 +415,14 @@ vec2 hill2(vec3 v, vec2 hit_data) {
     return res;
 }
 
+vec2 hill3(vec3 v, vec2 hit_data) {
+    hit_data = union_sdf(
+        hit_data, 
+        grass_block(v, vec3(1, 0.1, -1), 1, 0.15)
+    );
+    return hit_data;
+}
+
 vec2 road_block(vec3 v, vec3 p) {
     // p is the centroid of the whole road block.
     // The depth of road should be equal to land_adjust in function scene(vec4).
@@ -449,38 +457,38 @@ vec2 road_block(vec3 v, vec3 p) {
     return road;
 }
 
-vec2 floral_block(vec3 v, vec3 p) {
+// vec2 floral_block(vec3 v, vec3 p) {
 
-    float n = rand(p.xz) / 30;
-    float k = rand(p.xy);
-    float t = rand(p.zy);
-    float w = t / 50;
-    vec2 main_branch = cube(v, vec3(p.x, p.y + n / 2, p.z), vec3(w, n, w), LEAVE_MATERIAL);
-    if(k > 0.5) {
-        main_branch = union_sdf(
-            main_branch,
-            cube(v, vec3(p.x, p.y + n + 0.01, p.z), vec3(w, w, w), 0)
-        );
-    }
-    return main_branch;
-}
+//     float n = rand(p.xz) / 30;
+//     float k = rand(p.xy);
+//     float t = rand(p.zy);
+//     float w = t / 50;
+//     vec2 main_branch = cube(v, vec3(p.x, p.y + n / 2, p.z), vec3(w, n, w), LEAVE_MATERIAL);
+//     if(k > 0.5) {
+//         main_branch = union_sdf(
+//             main_branch,
+//             cube(v, vec3(p.x, p.y + n + 0.01, p.z), vec3(w, w, w), 0)
+//         );
+//     }
+//     return main_branch;
+// }
 
-vec2 plants_block(vec3 v, vec3 p, vec2 extent, vec2 hit_data) {
-    vec2 hit_test = cube(v, vec3(p.x, p.y+0.1, p.z), vec3(extent.x, 0.05, extent.y), 0);
-    if(hit_test.x > hit_data.x) return hit_data;
-    for(float i = 0; i < extent.x; i += 0.3) {
-        for(float j = 0; j < extent.y; j += 0.3) {
-            float t = rand(vec2(j, i));
-            if(t > 0.5) {
-                hit_data = union_sdf(
-                    hit_data,
-                    floral_block(v, vec3(p.x + i, p.y, p.z + j))
-                );
-            }
-        }
-    }
-    return hit_data;
-}
+// vec2 plants_block(vec3 v, vec3 p, vec2 extent, vec2 hit_data) {
+//     vec2 hit_test = cube(v, vec3(p.x, p.y+0.1, p.z), vec3(extent.x, 0.05, extent.y), 0);
+//     if(hit_test.x > hit_data.x) return hit_data;
+//     for(float i = 0; i < extent.x; i += 0.1) {
+//         for(float j = 0; j < extent.y; j += 0.1) {
+//             float t = rand(vec2(j, i));
+//             if(t > 0.5) {
+//                 hit_data = union_sdf(
+//                     hit_data,
+//                     floral_block(v, vec3(p.x + i, p.y, p.z + j))
+//                 );
+//             }
+//         }
+//     }
+//     return hit_data;
+// }
 
 /**
  * scene sdf, construct the scene here with geometric primitives
@@ -549,13 +557,14 @@ vec2 scene(vec4 iv) {
         res
     );
 
-    res = union_sdf(
-        res,
-        plants_block(v, vec3(1, 0.11, -1), vec2(1, 1), res)
-    );
+    // res = union_sdf(
+    //     res,
+    //     plants_block(v, vec3(1, 0.11, -1), vec2(1, 1), res)
+    // );
 
     res = hill1(v, res);
     res = hill2(v, res);
+    res = hill3(v, res);
 
     return vec2(res.x, res.y);
 }
