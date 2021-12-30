@@ -367,6 +367,32 @@ vec2 bench_block(vec3 v, vec3 p, vec2 hit_data) {
     return bench;
 }
 
+vec2 floral_block(vec3 v, vec3 p) {
+
+    float n = rand(p.xz) / 10;
+    float k = rand(p.xy) / 10;
+    float t = rand(p.zy) / 10;
+    float w = t / 5;
+    vec2 main_branch = cube(v, vec3(p.x, p.y + n / 2, p.z), vec3(w, n, w), LEAVE_MATERIAL);
+    main_branch = union_sdf(
+        main_branch,
+        cube(v, vec3(p.x - k, p.y + t / 2, p.z), vec3(w, t, w), LEAVE_MATERIAL)
+    );
+    main_branch = union_sdf(
+        main_branch,
+        cube(v, vec3(p.x + rand(vec2(k, t)) / 5, p.y + k / 2, p.z), vec3(w, k, w), LEAVE_MATERIAL)
+    );
+    main_branch = union_sdf(
+        main_branch,
+        cube(v, vec3(p.x, p.y + t / 2, p.z + rand(vec2(k, t)) / 5), vec3(w, t, w), LEAVE_MATERIAL)
+    );
+    main_branch = union_sdf(
+        main_branch,
+        cube(v, vec3(p.x, p.y + t / 2, p.z - rand(vec2(t, k)) / 5), vec3(w, t, w), LEAVE_MATERIAL)
+    );
+    return main_branch;
+}
+
 vec2 bridge_block(vec3 v, vec3 p) {
     // p is the center of block.
     const float length = 1.0;
@@ -397,6 +423,9 @@ vec2 hill1(vec3 v, vec2 hit_data) {
             res = union_sdf(
                 res,
                 grass_block(v, vec3(-1.5 + (2 * i + 1) * 0.15, 0.1, 1.5 - (2 * j + 1) * 0.15), 0.3, h * 0.125));
+            res = union_sdf(
+                res,
+                floral_block(v, vec3(-1.5 + (2 * i + 1) * 0.15, 0.1 + h * 0.125, 1.5 - (2 * j + 1) * 0.15)));
         }
     }
     return res;
@@ -457,22 +486,6 @@ vec2 road_block(vec3 v, vec3 p) {
     return road;
 }
 
-// vec2 floral_block(vec3 v, vec3 p) {
-
-//     float n = rand(p.xz) / 30;
-//     float k = rand(p.xy);
-//     float t = rand(p.zy);
-//     float w = t / 50;
-//     vec2 main_branch = cube(v, vec3(p.x, p.y + n / 2, p.z), vec3(w, n, w), LEAVE_MATERIAL);
-//     if(k > 0.5) {
-//         main_branch = union_sdf(
-//             main_branch,
-//             cube(v, vec3(p.x, p.y + n + 0.01, p.z), vec3(w, w, w), 0)
-//         );
-//     }
-//     return main_branch;
-// }
-
 // vec2 plants_block(vec3 v, vec3 p, vec2 extent, vec2 hit_data) {
 //     vec2 hit_test = cube(v, vec3(p.x, p.y+0.1, p.z), vec3(extent.x, 0.05, extent.y), 0);
 //     if(hit_test.x > hit_data.x) return hit_data;
@@ -529,6 +542,11 @@ vec2 scene(vec4 iv) {
 
     res = union_sdf(
         res,
+        tree_block(v, vec3(1.2, 0.25, -1), 0.5, res)
+    );
+
+    res = union_sdf(
+        res,
         streetlamp_block(v, vec3(-1, 0.1+0.01, 0), res, trace_shadow)
     );
 
@@ -565,6 +583,21 @@ vec2 scene(vec4 iv) {
     res = hill1(v, res);
     res = hill2(v, res);
     res = hill3(v, res);
+
+    res = union_sdf(
+        res, 
+        floral_block(v, vec3(1.2, 0.26, -1.3))
+    );
+
+    res = union_sdf(
+        res,
+        floral_block(v, vec3(1.1, 0.26, -1.2))
+    );
+
+    res = union_sdf(
+        res,
+        floral_block(v, vec3(-0.7, 0.1, 0.5))
+    );
 
     return vec2(res.x, res.y);
 }
@@ -654,12 +687,13 @@ void main() {
     vec2 ratio = vec2(resolution_.x / resolution_.y, 1.0);
     vec2 uv = ratio * (gl_FragCoord.xy / resolution_.xy - 0.5);
     // vec3 ro = vec3(3 * cos(u_time), 2, 3 * sin(u_time));
-    vec3 ro = vec3(2, 1, -2);
+    vec3 ro = vec3(3, 3, -3);
     mat3 cm = camera_mat(ro, vec3(0, 1, 0), vec3(0, 0, 0));
     vec3 rd = cm * normalize(vec3(uv.x, uv.y, 1.));
 
     vec2 res = ray_march(ro, rd);
     float dist = res.x;
+    int mat_id = int(res.y);
     Material hit_material = materials[int(res.y)];
     if (dist >= MAX_DISTANCE - 0.001) {
         FragColor = vec4(SKY, 1);
@@ -709,6 +743,11 @@ void main() {
             FragColor = vec4(vec3(dist / 5.0), 1.0);
         } else {
             FragColor = vec4(dif_color, 1.0);
+            // if(mat_id == 0) {
+            //     if(rand(gl_FragCoord.xy) > 0.99) {
+            //         FragColor = vec4(GRASS, 1.0);
+            //     }
+            // }
         }
     }
 }
