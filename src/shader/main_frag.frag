@@ -698,7 +698,7 @@ void main() {
     vec2 ratio = vec2(resolution_.x / resolution_.y, 1.0);
     vec2 uv = ratio * (gl_FragCoord.xy / resolution_.xy - 0.5);
     // vec3 ro = vec3(3 * cos(u_time), 2, 3 * sin(u_time));
-    vec3 ro = vec3(3, 3, -3);
+    vec3 ro = vec3(0, 3, -3);
     mat3 cm = camera_mat(ro, vec3(0, 1, 0), vec3(0, 0, 0));
     vec3 rd = cm * normalize(vec3(uv.x, uv.y, 1.));
 
