@@ -47,8 +47,8 @@ int main(int argc, char **argv, char **envp) {
     bool single_frame = false;
     bool night = true;
     int success;
-    const int width = 1024 / 8;
-    const int height = 768 / 8;
+    const int width = 1024;
+    const int height = 768;
     int framebufferWidth = 0;
     int framebufferHeight = 0;
     int resolution[] = {width, height};
@@ -178,8 +178,11 @@ int main(int argc, char **argv, char **envp) {
 
         glfwSwapBuffers(window);
         glfwPollEvents();
-        
-    } while (glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS && glfwWindowShouldClose(window) == 0)
+
+    } while (!single_frame && glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS && glfwWindowShouldClose(window) == 0);
+    if (single_frame) {
+        while (glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS && glfwWindowShouldClose(window) == 0) { }
+    }
 
     return 0;
 }
