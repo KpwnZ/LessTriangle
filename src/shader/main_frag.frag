@@ -6,7 +6,6 @@
 #define SURFACE 0.0001
 #define DEBUG_SDF false
 
-uniform bool day_time = false;
 out vec4 FragColor;  // gl style...
 uniform ivec2 resolution;
 uniform float u_time; 
@@ -48,7 +47,6 @@ vec3 centrosymmetric_y(vec3, vec2);
 
 // color
 #define SKY normalize_rgb(vec3(199, 235, 237))
-#define NIGHT_SKY normalize_rgb(vec3(16, 15, 43))
 #define GROUND normalize_rgb(vec3(182, 128, 115))
 #define GRASS normalize_rgb(vec3(221, 234, 143))
 #define BENCH1 normalize_rgb(vec3(150, 135, 65))
@@ -208,11 +206,11 @@ LightSource light_sources[LIGHT_CNT] = LightSource[LIGHT_CNT](
     LightSource(
         vec3(-1, 0.11 + 0.529, 0),
         vec3(0.9191, 0.8109, 0.0659),
-        day_time ? 5 : 9),
+        5),
     LightSource(
         vec3(0.6, 0.1 + 0.529, -0.1),
         vec3(0.9191, 0.8109, 0.0659),
-        day_time ? 5 : 9
+        5
     )
 );
 
@@ -248,8 +246,8 @@ vec2 floral_block(vec3 v, vec3 p) {
 vec2 grass_block(vec3 v, vec3 p, float extent, float height) {
     // p is the center of the bottom.
     vec2 block = union_sdf(
-        cube(v, vec3(p.x, p.y + height / 2, p.z), vec3(extent, height, extent), 0),
-        cube(v, vec3(p.x, p.y + height + 0.01 / 2, p.z), vec3(extent, 0.01, extent), 1));
+        cube(v, vec3(p.x, p.y + (height + 0.01) / 2, p.z), vec3(extent, height + 0.01, extent), 0),
+        cube(v, vec3(p.x, p.y + height + 0.0101, p.z), vec3(extent, 0.0001, extent), 1));
     return block;
 }
 
@@ -565,10 +563,10 @@ vec2 scene(vec4 iv) {
         tree_block(v, vec3(-0.6, 0.11, -1.2), 0.5, res)
     );
 
-    res = union_sdf(
-        res,
-        tree_block(v, vec3(1.2, 0.25, -1), 0.5, res)
-    );
+    // res = union_sdf(
+    //     res,
+    //     tree_block(v, vec3(1.2, 0.25, -1), 0.5, res)
+    // );
 
     res = union_sdf(
         res,
@@ -620,13 +618,6 @@ vec2 scene(vec4 iv) {
             cube(v, vec3(1.35, 0.15, -0.2), vec3(0.1, 0.1, 0.1), LEAVE_MATERIAL),
             cube(v, vec3(1.35, 0.125, -0.275), vec3(0.05, 0.05, 0.05), LEAVE_MATERIAL)
         )
-    );
-
-    res = union_sdf(
-        res,
-        union_sdf(
-            cube(v, vec3(-1.35, 0.15, -0.2), vec3(0.1, 0.1, 0.1), LEAVE_MATERIAL),
-            cube(v, vec3(-1.35, 0.125, -0.275), vec3(0.05, 0.05, 0.05), LEAVE_MATERIAL))
     );
 
     res = union_sdf(
@@ -743,8 +734,8 @@ void main() {
     vec2 resolution_ = resolution;
     vec2 ratio = vec2(resolution_.x / resolution_.y, 1.0);
     vec2 uv = ratio * (gl_FragCoord.xy / resolution_.xy - 0.5);
-    // vec3 ro = vec3(3 * cos(u_time), 2, 3 * sin(u_time));
-    vec3 ro = vec3(3, 3, -3);
+    vec3 ro = vec3(4 * cos(u_time), 3, 4 * sin(u_time));
+    // vec3 ro = vec3(3, 3, -3);
     mat3 cm = camera_mat(ro, vec3(0, 1, 0), vec3(0, 0, 0));
     vec3 rd = cm * normalize(vec3(uv.x, uv.y, 1.));
 
@@ -753,10 +744,7 @@ void main() {
     int mat_id = int(res.y);
     Material hit_material = materials[int(res.y)];
     if (dist >= MAX_DISTANCE - 0.001) {
-        if(day_time) 
-            FragColor = vec4(SKY, 1);
-        else
-            FragColor = vec4(NIGHT_SKY, 1);
+        FragColor = vec4(SKY, 1);
     } else {
         vec3 p = ro + rd * dist;
         // vec3 light_position = vec3(0, 3, -3);
@@ -795,7 +783,7 @@ void main() {
                 ls.light_color, hit_material.spec_color, hit_material.k_s, hit_material.shininess) * shadow;
         }
 
-        dif_color += ambient_light(hit_material.ambient_color, vec3(1, 1, 1), day_time ? daylight_ambient : nightlight_ambient);
+        dif_color += ambient_light(hit_material.ambient_color, vec3(1, 1, 1), daylight_ambient);
         if(hit_material.is_lightsource) {
             dif_color = hit_material.diffuse_color;
         }
