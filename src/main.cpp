@@ -45,7 +45,7 @@ static std::string read_shader(const std::filesystem::path::value_type *path)
 
 int main(int argc, char **argv, char **envp) {
     bool single_frame = false;
-    bool night = true;
+    bool night = false;
     int success;
     const int width = 1024;
     const int height = 768;
