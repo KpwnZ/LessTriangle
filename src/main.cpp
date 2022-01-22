@@ -54,7 +54,7 @@ int main(int argc, char **argv, char **envp) {
     int resolution[] = {width, height};
 
     for(int i = 0; i < argc; ++i) {
-        if(strcmp(argv[i], "-s") == 0) {
+        if(strcmp(argv[i], "-d") == 0) {
             single_frame = true;
         }else if(strcmp(argv[i], "-n") == 0) {
             night = true;
