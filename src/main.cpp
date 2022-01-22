@@ -181,7 +181,7 @@ int main(int argc, char **argv, char **envp) {
 
     } while (!single_frame && glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS && glfwWindowShouldClose(window) == 0);
     printf("[*] done\n");
-    if (single_frame) {
+    if (single_frame) {     // keep window here
         while (glfwWindowShouldClose(window) == 0) {
             glfwPollEvents();
         }
