@@ -53,8 +53,8 @@ int main(int argc, char **argv, char **envp) {
     int framebufferHeight = 0;
     int resolution[] = {width, height};
 
-    for(int i = 0; i < argc; ++i) {
-        if(strcmp(argv[i], "-d") == 0) {
+    for (int i = 0; i < argc; ++i) {
+        if (strcmp(argv[i], "-d") == 0) {
             single_frame = false;
         } else if (strcmp(argv[i], "-n") == 0) {
             night = true;
@@ -171,6 +171,7 @@ int main(int argc, char **argv, char **envp) {
     do {
         glUniform1f(glGetUniformLocation(shader_program, "u_time"), float(clock()) / CLOCKS_PER_SEC);
         glUniform1i(glGetUniformLocation(shader_program, "day_time"), !night);
+        glUniform1i(glGetUniformLocation(shader_program, "dynamic_scene"), !single_frame);
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
         glDrawArrays(GL_TRIANGLES, 0, 6);
@@ -181,7 +182,7 @@ int main(int argc, char **argv, char **envp) {
 
     } while (!single_frame && glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS && glfwWindowShouldClose(window) == 0);
     printf("[*] done\n");
-    if (single_frame) {     // keep window here
+    if (single_frame) { // keep window here
         while (glfwWindowShouldClose(window) == 0) {
             glfwPollEvents();
         }
