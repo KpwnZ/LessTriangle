@@ -32,7 +32,7 @@ static std::string read_shader(const std::filesystem::path::value_type *path)
     try {
         ifs.open(path);
     } catch (std::exception &e) {
-        fprintf(stderr, "[-] failed to open file\n");
+        fprintf(stderr, "[-] failed to open file %s\n", path);
         exit(1);
     }
     ifs.ignore(std::numeric_limits<std::streamsize>::max());
