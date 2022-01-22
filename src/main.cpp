@@ -44,7 +44,7 @@ static std::string read_shader(const std::filesystem::path::value_type *path)
 }
 
 int main(int argc, char **argv, char **envp) {
-    bool single_frame = false;
+    bool single_frame = true;
     bool night = true;
     int success;
     const int width = 1024 / 8;
@@ -54,8 +54,8 @@ int main(int argc, char **argv, char **envp) {
     int resolution[] = {width, height};
 
     for(int i = 0; i < argc; ++i) {
-        if(strcmp(argv[i], "-s") == 0) {
-            single_frame = true;
+        if(strcmp(argv[i], "-d") == 0) {
+            single_frame = false;
         }else if(strcmp(argv[i], "-n") == 0) {
             night = true;
         }
