@@ -2,6 +2,8 @@
 #include <GLFW/glfw3.h>
 
 #include <cmath>
+#include <ctime>
+#include <exception>
 #include <filesystem>
 #include <fstream>
 #include <glm/glm.hpp>
@@ -10,8 +12,6 @@
 #include <iostream>
 #include <iterator>
 #include <vector>
-#include <ctime>
-#include <exception>
 
 /**
  * Read shader source file to std::string.
@@ -44,19 +44,19 @@ static std::string read_shader(const std::filesystem::path::value_type *path)
 }
 
 int main(int argc, char **argv, char **envp) {
-    bool single_frame = false;
-    bool night = true;
+    bool single_frame = true;
+    bool night = false;
     int success;
-    const int width = 1024 / 8;
-    const int height = 768 / 8;
+    const int width = 1024;
+    const int height = 768;
     int framebufferWidth = 0;
     int framebufferHeight = 0;
     int resolution[] = {width, height};
 
     for(int i = 0; i < argc; ++i) {
         if(strcmp(argv[i], "-d") == 0) {
-            single_frame = true;
-        }else if(strcmp(argv[i], "-n") == 0) {
+            single_frame = false;
+        } else if (strcmp(argv[i], "-n") == 0) {
             night = true;
         }
     }
@@ -167,7 +167,7 @@ int main(int argc, char **argv, char **envp) {
     glEnableVertexAttribArray(0);
     // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     glUniform2iv(glGetUniformLocation(shader_program, "resolution"), 1, resolution);
-    
+
     do {
         glUniform1f(glGetUniformLocation(shader_program, "u_time"), float(clock()) / CLOCKS_PER_SEC);
         glUniform1i(glGetUniformLocation(shader_program, "day_time"), !night);
@@ -178,8 +178,11 @@ int main(int argc, char **argv, char **envp) {
 
         glfwSwapBuffers(window);
         glfwPollEvents();
-        
-    } while (glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS && glfwWindowShouldClose(window) == 0)
+
+    } while (!single_frame && glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS && glfwWindowShouldClose(window) == 0);
+    if (single_frame) {
+        while (glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS && glfwWindowShouldClose(window) == 0) { }
+    }
 
     return 0;
 }

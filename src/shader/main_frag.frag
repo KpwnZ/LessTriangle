@@ -249,8 +249,8 @@ vec2 floral_block(vec3 v, vec3 p) {
 vec2 grass_block(vec3 v, vec3 p, float extent, float height) {
     // p is the center of the bottom.
     vec2 block = union_sdf(
-        cube(v, vec3(p.x, p.y + height / 2, p.z), vec3(extent, height, extent), 0),
-        cube(v, vec3(p.x, p.y + height + 0.01 / 2, p.z), vec3(extent, 0.01, extent), 1));
+        cube(v, vec3(p.x, p.y + (height + 0.01) / 2, p.z), vec3(extent, height + 0.01, extent), 0),
+        cube(v, vec3(p.x, p.y + height + 0.0101, p.z), vec3(extent, 0.0001, extent), 1));
     return block;
 }
 
@@ -566,10 +566,10 @@ vec2 scene(vec4 iv) {
         tree_block(v, vec3(-0.6, 0.11, -1.2), 0.5, res)
     );
 
-    res = union_sdf(
-        res,
-        tree_block(v, vec3(1.2, 0.25, -1), 0.5, res)
-    );
+    // res = union_sdf(
+    //     res,
+    //     tree_block(v, vec3(1.2, 0.25, -1), 0.5, res)
+    // );
 
     res = union_sdf(
         res,
@@ -621,13 +621,6 @@ vec2 scene(vec4 iv) {
             cube(v, vec3(1.35, 0.15, -0.2), vec3(0.1, 0.1, 0.1), LEAVE_MATERIAL),
             cube(v, vec3(1.35, 0.125, -0.275), vec3(0.05, 0.05, 0.05), LEAVE_MATERIAL)
         )
-    );
-
-    res = union_sdf(
-        res,
-        union_sdf(
-            cube(v, vec3(-1.35, 0.15, -0.2), vec3(0.1, 0.1, 0.1), LEAVE_MATERIAL),
-            cube(v, vec3(-1.35, 0.125, -0.275), vec3(0.05, 0.05, 0.05), LEAVE_MATERIAL))
     );
 
     res = union_sdf(
@@ -759,7 +752,7 @@ void main() {
     int mat_id = int(res.y);
     Material hit_material = materials[int(res.y)];
     if (dist >= MAX_DISTANCE - 0.001) {
-        if(day_time) 
+        if (day_time)
             FragColor = vec4(SKY, 1);
         else
             FragColor = vec4(NIGHT_SKY, 1);
